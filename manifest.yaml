@@ -1,0 +1,64 @@
+id: scriptures
+name: Scriptures
+version: "1.0.0"
+description: >
+  Bible reading app. Browse, search, bookmark, highlight, and take study notes
+  on scripture. Supports multiple Bible versions loaded from MySword modules.
+onboarding_tour: true  # included in the first-run onboarding tour
+
+platform_deps: []
+
+entity_types:
+  - prefix: "bv"
+    name: Bible Version
+    table: bible_versions
+  - prefix: "bb"
+    name: Bible Book
+    table: bible_books
+  - prefix: "sbm"
+    name: Scripture Bookmark
+    table: scripture_bookmarks
+  - prefix: "shl"
+    name: Scripture Highlight
+    table: scripture_highlights
+  - prefix: "sn"
+    name: Scripture Note
+    table: scripture_notes
+  - prefix: "rpl"
+    name: Reading Plan
+    table: reading_plans
+  - prefix: "rpp"
+    name: Reading Plan Progress
+    table: reading_plan_progress
+
+tool_category:
+  description: >
+    Bible scripture reading and study. Look up verses, search the Bible,
+    manage bookmarks and study notes, and track reading plan progress.
+  keywords:
+    - bible
+    - scripture
+    - scriptures
+    - verse
+    - chapter
+    - book of
+    - genesis
+    - exodus
+    - psalm
+    - proverbs
+    - matthew
+    - john
+    - revelation
+    - torah
+    - read me
+    - what does the bible say
+    - bookmark verse
+    - reading plan
+    - torah portion
+    - parashah
+    - haftarah
+    - bereshith
+    - daily reading
+
+emits: []
+subscribes: []

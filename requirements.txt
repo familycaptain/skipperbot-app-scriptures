@@ -1,0 +1,2 @@
+# App-only Python dependency (the platform does not bundle this).
+pymupdf>=1.24.0     # one-time Bible PDF import (apps/scriptures/import_bible.py)
