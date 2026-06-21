@@ -30,9 +30,9 @@ const COLOR_RING = {
 };
 
 // ─── Shared styles ──────────────────────────────────────────────────────────
-const btnPrimary = "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded bg-teal-600 hover:bg-teal-500 text-white disabled:opacity-50";
+const btnPrimary = "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50";
 const btnSecondary = "px-3 py-1.5 text-sm rounded bg-gray-700 text-gray-300 hover:bg-gray-600";
-const inp = "w-full text-sm bg-gray-900 border border-gray-600 rounded px-2 py-1.5 text-gray-200 focus:outline-none focus:border-teal-500";
+const inp = "w-full text-sm bg-gray-900 border border-gray-600 rounded px-2 py-1.5 text-gray-200 focus:outline-none focus:border-blue-500";
 
 const TABS = [
   { id: "read",      label: "Read",      Icon: BookOpen },
@@ -272,7 +272,7 @@ export default function ScripturesApp({ appId, userId, onTitle, refreshKey }) {
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.id ? "border-teal-400 text-teal-300" : "border-transparent text-gray-400 hover:text-gray-200"
+              tab === t.id ? "border-blue-400 text-blue-300" : "border-transparent text-gray-400 hover:text-gray-200"
             }`}>
             <t.Icon size={16} /> {t.label}
           </button>
@@ -284,7 +284,7 @@ export default function ScripturesApp({ appId, userId, onTitle, refreshKey }) {
           {Object.entries(FONT_SIZES).map(([key, val]) => (
             <button key={key} onClick={() => setFontSize(key)}
               className={`px-2 py-1 text-xs rounded ${
-                fontSize === key ? "bg-teal-600 text-white" : "bg-gray-700 text-gray-400 hover:bg-gray-600"
+                fontSize === key ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-400 hover:bg-gray-600"
               }`}>
               {val.label}
             </button>
@@ -402,7 +402,7 @@ function ReadTab({
                 </button>
                 {!isHere && (
                   <button onClick={() => moveBookmark(bm.id)} title="Save current position to this bookmark"
-                    className="text-xs text-gray-500 hover:text-teal-400 px-1">
+                    className="text-xs text-gray-500 hover:text-blue-400 px-1">
                     ↓ Save
                   </button>
                 )}
@@ -425,7 +425,7 @@ function ReadTab({
               idx === 0 ? "rounded-l-lg" : idx === arr.length - 1 ? "rounded-r-lg" : ""
             } ${
               viewMode === btn.key
-                ? "bg-teal-600 text-white border-teal-600"
+                ? "bg-blue-600 text-white border-blue-600"
                 : "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600"
             }`}>
             {btn.label}
@@ -435,7 +435,7 @@ function ReadTab({
         {viewMode !== "scripture" && (
           <button onClick={() => handleRegenerate(viewMode)}
             title="Regenerate"
-            className="ml-2 p-1.5 text-gray-400 hover:text-teal-400 hover:bg-gray-700 rounded transition-colors">
+            className="ml-2 p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors">
             <RefreshCw size={16} />
           </button>
         )}
@@ -473,7 +473,7 @@ function ReadTab({
             )}
             {verses.map(v => (
               <div key={v.verse} className="mb-6">
-                <sup className={`${fs.verseNum} text-teal-500 font-semibold mr-1 select-none`}>
+                <sup className={`${fs.verseNum} text-blue-600 font-semibold mr-1 select-none`}>
                   {v.verse}
                 </sup>
                 <VerseText
@@ -526,7 +526,7 @@ const ENTITY_ALIAS_STOPWORDS = new Set([
 ]);
 const ENTITY_LINK_COLORS = {
   person: "#fbbf24",
-  place: "#5eead4",
+  place: "#2563eb",
   pronoun: "#c084fc",
 };
 const ENTITY_SHORT_NAME_PATTERNS = [
@@ -805,7 +805,7 @@ function LlmContent({ content, isLoading, loadingLabel, emptyLabel, fs, collapsi
   if (isLoading) {
     return (
       <div className="flex items-center gap-3 py-12 justify-center">
-        <Loader2 className="animate-spin text-teal-400" size={28} />
+        <Loader2 className="animate-spin text-blue-400" size={28} />
         <span className={`${fs.summary} text-gray-400`}>{loadingLabel}</span>
       </div>
     );
@@ -820,7 +820,7 @@ function LlmContent({ content, isLoading, loadingLabel, emptyLabel, fs, collapsi
     return (
       <div className={`${fs.summary} text-gray-200 leading-normal`}>
         {content.split(/\n+/).filter(p => p.trim()).map((para, i) => {
-          const html = para.replace(/\*\*(.+?)\*\*/g, '<strong class="text-teal-300">$1</strong>');
+          const html = para.replace(/\*\*(.+?)\*\*/g, '<strong class="text-blue-300">$1</strong>');
           if (!entities.length || !onEntityClick) {
             return <div key={i} className="mb-6" dangerouslySetInnerHTML={{ __html: html }} />;
           }
@@ -896,7 +896,7 @@ function LlmContent({ content, isLoading, loadingLabel, emptyLabel, fs, collapsi
                   isOpen ? "rotate-0" : "-rotate-90"
                 }`}
               />
-              <span className={`${fs.summary} font-semibold text-teal-300 leading-snug`}>
+              <span className={`${fs.summary} font-semibold text-blue-300 leading-snug`}>
                 {sec.name}
               </span>
             </button>
@@ -904,7 +904,7 @@ function LlmContent({ content, isLoading, loadingLabel, emptyLabel, fs, collapsi
               <div className={`${fs.summary} text-gray-200 leading-normal px-4 py-3 border-t border-gray-700 bg-gray-800/50`}>
                 {sec.body.map((p, j) => (
                   <div key={j} className="mb-3" dangerouslySetInnerHTML={{
-                    __html: p.replace(/\*\*(.+?)\*\*/g, '<strong class="text-teal-300">$1</strong>')
+                    __html: p.replace(/\*\*(.+?)\*\*/g, '<strong class="text-blue-300">$1</strong>')
                   }} />
                 ))}
               </div>
@@ -937,7 +937,7 @@ function EntityModal({ entityName, allEntities, onClose, fs }) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700 shrink-0">
-          <h3 className={`${fs.summary} font-bold text-teal-300 leading-snug`}>{entityName}</h3>
+          <h3 className={`${fs.summary} font-bold text-blue-300 leading-snug`}>{entityName}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white ml-4 shrink-0">
             <X size={22} />
           </button>
@@ -947,7 +947,7 @@ function EntityModal({ entityName, allEntities, onClose, fs }) {
           {info && info.body.length > 0 ? (
             info.body.map((para, i) => (
               <p key={i} className="mb-3" dangerouslySetInnerHTML={{
-                __html: para.replace(/\*\*(.+?)\*\*/g, '<strong class="text-teal-300">$1</strong>')
+                __html: para.replace(/\*\*(.+?)\*\*/g, '<strong class="text-blue-300">$1</strong>')
               }} />
             ))
           ) : (
@@ -983,7 +983,7 @@ function BookPicker({ books, currentBook, onSelect, onClose }) {
             <button key={b.book_number} onClick={() => onSelect(b.book_number)}
               className={`px-2 py-2 text-xs rounded text-center truncate ${
                 b.book_number === currentBook
-                  ? "bg-teal-600 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
               }`}
               title={`${b.name} (${b.name_english})`}>
@@ -998,7 +998,7 @@ function BookPicker({ books, currentBook, onSelect, onClose }) {
             <button key={b.book_number} onClick={() => onSelect(b.book_number)}
               className={`px-2 py-2 text-xs rounded text-center truncate ${
                 b.book_number === currentBook
-                  ? "bg-teal-600 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
               }`}
               title={`${b.name} (${b.name_english})`}>
@@ -1047,7 +1047,7 @@ function SearchTab({ versionId, goToVerse, fs }) {
         <Search size={18} className="absolute left-3 top-2.5 text-gray-500" />
         <input type="text" value={query} onChange={e => handleInput(e.target.value)}
           placeholder="Search the scriptures (min 3 characters)…"
-          className="w-full text-lg bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-gray-200 focus:outline-none focus:border-teal-500" />
+          className="w-full text-lg bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-gray-200 focus:outline-none focus:border-blue-500" />
       </div>
 
       {searching && (
@@ -1065,12 +1065,12 @@ function SearchTab({ versionId, goToVerse, fs }) {
           const ref = `${r.book_name || r.book_name_english} ${r.chapter}:${r.verse}`;
           // Highlight search term in text
           const highlighted = query
-            ? r.text.replace(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"), "<mark class='bg-teal-700 text-white rounded px-0.5'>$1</mark>")
+            ? r.text.replace(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"), "<mark class='bg-blue-700 text-white rounded px-0.5'>$1</mark>")
             : r.text;
           return (
             <button key={i} onClick={() => goToVerse(r.book, r.chapter)}
               className="w-full text-left p-3 rounded-lg bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-gray-600 transition-colors">
-              <div className="text-sm font-semibold text-teal-400 mb-1">{ref}</div>
+              <div className="text-sm font-semibold text-blue-400 mb-1">{ref}</div>
               <div className={`${fs.verse === "text-4xl" ? "text-lg" : "text-base"} text-gray-300 leading-relaxed`}
                 dangerouslySetInnerHTML={{ __html: highlighted }} />
             </button>
@@ -1193,7 +1193,7 @@ function BookmarksTab({ versionId, userId, goToBookmark }) {
             </div>
 
             <button onClick={() => goToBookmark(bm)}
-              className="px-3 py-1.5 text-sm rounded bg-teal-700 hover:bg-teal-600 text-white shrink-0">
+              className="px-3 py-1.5 text-sm rounded bg-blue-700 hover:bg-blue-600 text-white shrink-0">
               Go to
             </button>
 
