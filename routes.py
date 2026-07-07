@@ -12,9 +12,38 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app_platform.auth import current_principal
 from apps.scriptures import data as _dl
+from providers.compat import chat_completion
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _extract_json_object(text: str) -> dict:
+    """Parse a JSON object from an LLM response robustly.
+
+    The tier/provider layer has no response_format (JSON mode), so the pronouns
+    model is only INSTRUCTED to return JSON, not forced. Strip an optional
+    ```json ... ``` markdown fence and, failing a direct parse, extract the first
+    balanced {...} object (tolerating leading prose) before json.loads. Raises on
+    empty/non-JSON so the caller fails loudly rather than caching garbage.
+    """
+    s = (text or "").strip()
+    if not s:
+        raise ValueError("empty LLM response")
+    if s.startswith("```"):
+        # drop a leading ```json (or ```) fence and any trailing fence
+        s = s.split("\n", 1)[1] if "\n" in s else s
+        if s.rstrip().endswith("```"):
+            s = s.rstrip()[:-3]
+        s = s.strip()
+    try:
+        return json.loads(s)
+    except json.JSONDecodeError:
+        start = s.find("{")
+        end = s.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            return json.loads(s[start:end + 1])
+        raise
 
 
 def _actor(request: Request) -> str:
@@ -150,13 +179,13 @@ async def api_generate_summary(request: Request):
 
 
 def _get_summary_model() -> str:
-    from config import DUMB_MODEL
-    return DUMB_MODEL
+    # Tier vocabulary (ev-105): the raw DUMB_MODEL id was dropped when LLM access
+    # moved to the tier/provider system. Persisted as model_name provenance.
+    return "fast"
 
 
 def _generate_summary_llm(book_name: str, chapter: int, chapter_text: str, version_name: str = "Bible") -> str:
     """Call OpenAI to generate a chapter summary."""
-    from config import openai_client, DUMB_MODEL
 
     prompt = (
         f"Summarize {book_name} chapter {chapter} from the {version_name}.\n\n"
@@ -175,15 +204,15 @@ def _generate_summary_llm(book_name: str, chapter: int, chapter_text: str, versi
     )
 
     try:
-        resp = openai_client.chat.completions.create(
-            model=DUMB_MODEL,
+        res = chat_completion(
+            tier="fast",
             messages=[
                 {"role": "system", "content": "You are a Bible study assistant. Provide clear, concise chapter summaries."},
                 {"role": "user", "content": prompt},
             ],
             max_completion_tokens=16000,
         )
-        return (resp.choices[0].message.content or "").strip()
+        return (res.content or "").strip()
     except Exception as e:
         logger.exception("Failed to generate summary for %s %d", book_name, chapter)
         raise
@@ -237,7 +266,6 @@ async def api_generate_people(request: Request):
 
 def _generate_people_llm(book_name: str, chapter: int, chapter_text: str, version_name: str = "Bible") -> str:
     """Call OpenAI to generate a people list for a chapter."""
-    from config import openai_client, DUMB_MODEL
 
     prompt = (
         f"List every person mentioned in {book_name} chapter {chapter} from the {version_name}.\n\n"
@@ -260,15 +288,15 @@ def _generate_people_llm(book_name: str, chapter: int, chapter_text: str, versio
     )
 
     try:
-        resp = openai_client.chat.completions.create(
-            model=DUMB_MODEL,
+        res = chat_completion(
+            tier="fast",
             messages=[
                 {"role": "system", "content": "You are a Bible study assistant. Provide thorough, factual analysis."},
                 {"role": "user", "content": prompt},
             ],
             max_completion_tokens=16000,
         )
-        return (resp.choices[0].message.content or "").strip()
+        return (res.content or "").strip()
     except Exception as e:
         logger.exception("Failed to generate people for %s %d", book_name, chapter)
         raise
@@ -322,7 +350,6 @@ async def api_generate_places(request: Request):
 
 def _generate_places_llm(book_name: str, chapter: int, chapter_text: str, version_name: str = "Bible") -> str:
     """Call OpenAI to generate a places list for a chapter."""
-    from config import openai_client, DUMB_MODEL
 
     prompt = (
         f"List every place mentioned or implied in {book_name} chapter {chapter} from the {version_name}.\n\n"
@@ -346,15 +373,15 @@ def _generate_places_llm(book_name: str, chapter: int, chapter_text: str, versio
     )
 
     try:
-        resp = openai_client.chat.completions.create(
-            model=DUMB_MODEL,
+        res = chat_completion(
+            tier="fast",
             messages=[
                 {"role": "system", "content": "You are a Bible study assistant. Provide thorough, factual analysis."},
                 {"role": "user", "content": prompt},
             ],
             max_completion_tokens=16000,
         )
-        return (resp.choices[0].message.content or "").strip()
+        return (res.content or "").strip()
     except Exception as e:
         logger.exception("Failed to generate places for %s %d", book_name, chapter)
         raise
@@ -403,7 +430,6 @@ async def api_generate_pronouns(request: Request):
 
 def _generate_pronouns_llm(book_name: str, chapter: int, verses: list[dict], version_name: str = "Bible") -> list[dict]:
     """Call OpenAI to resolve pronouns for each verse in a chapter."""
-    from config import openai_client, DUMB_MODEL
 
     chapter_text = "\n".join(f"{v['verse']}. {v['text']}" for v in verses)
     prompt = (
@@ -426,17 +452,16 @@ def _generate_pronouns_llm(book_name: str, chapter: int, verses: list[dict], ver
     )
 
     try:
-        resp = openai_client.chat.completions.create(
-            model=DUMB_MODEL,
+        res = chat_completion(
+            tier="fast",
             messages=[
                 {"role": "system", "content": "You are a Bible study assistant. Resolve pronouns accurately and return strict JSON only."},
                 {"role": "user", "content": prompt},
             ],
             max_completion_tokens=16000,
-            response_format={"type": "json_object"},
         )
-        raw = (resp.choices[0].message.content or "").strip()
-        data = json.loads(raw)
+        # No provider-layer JSON mode (response_format dropped) — parse robustly.
+        data = _extract_json_object(res.content or "")
         verses_out = data.get("verses") if isinstance(data, dict) else None
         if not isinstance(verses_out, list):
             raise ValueError("Pronoun response did not contain a 'verses' array")
