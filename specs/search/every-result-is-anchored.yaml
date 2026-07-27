@@ -1,0 +1,15 @@
+kind: specification
+id: scriptures.search.every-result-is-anchored
+title: Every result says where it is and opens there
+state: live
+autonomy: gated
+behavior: >
+  Each match is shown with its book, chapter and verse and with the searched words marked inside the
+  verse, so the reader can judge it without opening it. Choosing a result opens that chapter in the
+  reader.
+implements:
+- ui/ScripturesApp.jsx::SearchTab
+- data.py::search_verses
+tests: []
+links: {}
+notes: ''

@@ -1,0 +1,15 @@
+kind: specification
+id: scriptures.importing.already-loaded-is-left-alone
+title: Re-importing an edition already present changes nothing
+state: live
+autonomy: gated
+behavior: >
+  If a translation with the same abbreviation is already loaded, the import stops and says so
+  instead of loading a second copy or overwriting the first. Re-running an import is therefore
+  always safe, and replacing a translation is a deliberate act of removing the old one first.
+implements:
+- import_bible.py::_insert_into_postgres
+- migrations/001_initial.sql
+tests: []
+links: {}
+notes: ''

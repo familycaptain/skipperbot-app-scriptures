@@ -1,0 +1,14 @@
+kind: capability
+id: scriptures
+title: Scriptures
+app: scriptures
+scope: 'Reading scripture inside the assistant: the translations an install has loaded, browsing
+  and searching them, shared named reading positions, and study aids (chapter summary, the people
+  in it, the places in it, pronoun resolution) generated once and then kept. Ships as its own
+  optional package because not every household wants religious content in their assistant. NOT a
+  commentary library, not a devotional, and not a source of scripture text — text only enters an
+  install by an explicit import someone runs.'
+state: live
+autonomy: gated
+links: {}
+notes: ''

@@ -1,0 +1,20 @@
+kind: specification
+id: scriptures.study.asking-for-an-aid-sends-the-chapter-out
+title: Asking for a study aid sends the chapter to a language model
+state: live
+autonomy: gated
+behavior: >
+  Generating a summary, a people or places account, or a pronoun resolution sends that chapter's
+  verses to a language model outside the app; reading, browsing and searching send nothing anywhere.
+  Nothing is sent unless a reader asks for an aid or the prepare-ahead pass runs, and only scripture
+  text and the chapter's reference are sent — never anything about who is reading.
+implements:
+- routes.py::_generate_summary_llm
+- routes.py::_generate_people_llm
+- routes.py::_generate_places_llm
+- routes.py::_generate_pronouns_llm
+tests: []
+links: {}
+notes: >
+  Stated plainly because a household choosing a self-hosted assistant for religious reading has a
+  right to know which actions leave the install.

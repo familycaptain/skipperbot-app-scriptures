@@ -1,0 +1,16 @@
+kind: specification
+id: scriptures.reading.reading-runs-on-past-the-end-of-a-book
+title: Reading runs on past the end of a book
+state: live
+autonomy: gated
+behavior: >
+  Moving forward from the last chapter of a book opens the first chapter of the next book, and
+  moving back from the first chapter opens the last chapter of the previous one, so someone reading
+  straight through never has to reach for the book list. At the very beginning and the very end of
+  the canon the corresponding control is disabled rather than wrapping around.
+implements:
+- ui/ScripturesApp.jsx::ScripturesApp
+- ui/ScripturesApp.jsx::ReadTab
+tests: []
+links: {}
+notes: ''

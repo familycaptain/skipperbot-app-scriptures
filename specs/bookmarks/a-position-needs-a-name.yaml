@@ -1,0 +1,17 @@
+kind: specification
+id: scriptures.bookmarks.a-position-needs-a-name
+title: A position needs a name and gets a colour
+state: live
+autonomy: gated
+behavior: >
+  Creating a reading position requires a name; an empty one is refused rather than creating an
+  unnamed entry. A colour may be chosen to tell positions apart at a glance, and the person who
+  created it is recorded from their signed-in identity rather than from anything the request claims.
+implements:
+- routes.py::api_create_bookmark
+- data.py::create_bookmark
+- routes.py::_actor
+- ui/ScripturesApp.jsx::BookmarksTab
+tests: []
+links: {}
+notes: ''

@@ -1,0 +1,15 @@
+kind: specification
+id: scriptures.reading.pick-a-book-from-the-whole-canon
+title: Pick a book from the whole canon at once
+state: live
+autonomy: gated
+behavior: >
+  The book chooser shows every book of both testaments on one screen as short abbreviations, with
+  the book currently open marked and each one naming itself in full on hover. Choosing a book opens
+  its first chapter and closes the chooser; dismissing it without choosing leaves the reader where
+  they were.
+implements:
+- ui/ScripturesApp.jsx::BookPicker
+tests: []
+links: {}
+notes: ''

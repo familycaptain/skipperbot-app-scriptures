@@ -1,0 +1,16 @@
+kind: specification
+id: scriptures.reading.reading-never-leaves-the-house
+title: Reading and searching never leave the install
+state: live
+autonomy: gated
+behavior: >
+  Browsing books, opening a chapter, moving between chapters and searching are all answered from
+  scripture already held in the install; none of them contacts anything outside it. Reading works
+  with the house offline, and no record of what a person read is sent anywhere.
+implements:
+- data.py::get_chapter_verses
+- data.py::search_verses
+- routes.py::api_read_chapter
+tests: []
+links: {}
+notes: ''

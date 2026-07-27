@@ -1,0 +1,15 @@
+kind: specification
+id: scriptures.bookmarks.positions-ride-along-with-the-reader
+title: Positions ride along with the reader
+state: live
+autonomy: gated
+behavior: >
+  Every reading position is shown as a strip above the passage, each naming the book and chapter it
+  points at. The one pointing at the chapter now open is marked in its own colour and offers no
+  "save here", since it is already here; with no positions saved the strip is absent entirely.
+implements:
+- ui/ScripturesApp.jsx::ReadTab
+- routes.py::api_read_chapter
+tests: []
+links: {}
+notes: ''

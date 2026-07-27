@@ -1,0 +1,17 @@
+kind: specification
+id: scriptures.study.aids-belong-to-the-translation
+title: A study aid belongs to the translation it was written from
+state: live
+autonomy: gated
+behavior: >
+  Study material is stored against the translation it was generated from and is written using that
+  translation's own names and spellings, so a summary never renders divine or personal names in a
+  form the reader's edition does not use. Reading the same chapter in another translation generates
+  and keeps its own material.
+implements:
+- data.py::save_chapter_summary
+- routes.py::_generate_summary_llm
+- routes.py::_generate_people_llm
+tests: []
+links: {}
+notes: ''

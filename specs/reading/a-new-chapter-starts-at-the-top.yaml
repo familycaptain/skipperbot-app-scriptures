@@ -1,0 +1,16 @@
+kind: specification
+id: scriptures.reading.a-new-chapter-starts-at-the-top
+title: A new chapter starts at the top
+state: live
+autonomy: gated
+behavior: >
+  Moving to another chapter puts the reader at its first verse rather than at whatever scroll
+  position the previous chapter was left in, and returns the view to the scripture text if a study
+  aid was open. Anything revealed in the previous chapter, such as an opened person or a resolved
+  pronoun, is cleared with it.
+implements:
+- ui/ScripturesApp.jsx::ReadTab
+- ui/ScripturesApp.jsx::ScripturesApp
+tests: []
+links: {}
+notes: ''

@@ -1,0 +1,15 @@
+kind: specification
+id: scriptures.search.three-characters-and-a-pause
+title: Searching waits for three characters and a pause
+state: live
+autonomy: gated
+behavior: >
+  A search of fewer than three characters is refused rather than run, and the app waits for a short
+  pause in typing before searching at all, so a phrase typed at speed produces one search and not
+  one per keystroke.
+implements:
+- routes.py::api_search
+- ui/ScripturesApp.jsx::SearchTab
+tests: []
+links: {}
+notes: ''

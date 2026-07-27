@@ -1,0 +1,16 @@
+kind: specification
+id: scriptures.bookmarks.removing-a-position-is-confirmed
+title: Removing a shared position takes two steps
+state: live
+autonomy: gated
+behavior: >
+  Because reading positions are shared, removing one asks for confirmation before it goes, and the
+  choice can be abandoned. Removing a position takes away only the position: the scripture and any
+  study material generated for that chapter are untouched.
+implements:
+- ui/ScripturesApp.jsx::BookmarksTab
+- routes.py::api_delete_bookmark
+- data.py::delete_bookmark
+tests: []
+links: {}
+notes: ''

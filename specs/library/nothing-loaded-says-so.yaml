@@ -1,0 +1,18 @@
+kind: specification
+id: scriptures.library.nothing-loaded-says-so
+title: With no translation loaded, nothing pretends to work
+state: live
+autonomy: gated
+behavior: >
+  A fresh install holds no scripture at all. Until someone imports a translation, every request to
+  browse, read, search, bookmark or summarise answers that no Bible versions are loaded rather than
+  returning an empty book list or a blank chapter, so the reason nothing appears is never left to
+  guesswork.
+implements:
+- routes.py::api_list_books
+- routes.py::api_read_chapter
+- routes.py::api_search
+- data.py::get_default_version
+tests: []
+links: {}
+notes: ''

@@ -1,0 +1,14 @@
+kind: specification
+id: scriptures.importing.all-or-nothing
+title: An import that fails leaves nothing behind
+state: live
+autonomy: gated
+behavior: >
+  The translation, its books and all of its verses are written as one indivisible act, so an import
+  interrupted or failing partway leaves the install exactly as it was. A reader never finds a
+  half-written translation offering the first few books and nothing after them.
+implements:
+- import_bible.py::_insert_into_postgres
+tests: []
+links: {}
+notes: ''

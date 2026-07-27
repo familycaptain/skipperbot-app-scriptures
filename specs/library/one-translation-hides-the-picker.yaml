@@ -1,0 +1,15 @@
+kind: specification
+id: scriptures.library.one-translation-hides-the-picker
+title: The translation picker appears only when there is a choice
+state: live
+autonomy: gated
+behavior: >
+  With a single translation loaded no translation selector is shown, because there is nothing to
+  choose between. The selector appears as soon as a second translation is imported, listing every
+  loaded edition by its abbreviation.
+implements:
+- ui/ScripturesApp.jsx::ReadTab
+- routes.py::api_list_versions
+tests: []
+links: {}
+notes: ''

@@ -1,0 +1,18 @@
+kind: specification
+id: scriptures.study.generated-once-then-kept
+title: A study aid is generated once and then kept
+state: live
+autonomy: gated
+behavior: >
+  The first request for an aid on a chapter generates it and stores it; every later request for that
+  chapter — by anyone, at any time — returns the stored one immediately and says it was already
+  held, so nobody waits twice for the same passage. Aids already stored arrive with the chapter, so
+  a prepared chapter opens with its study material ready.
+implements:
+- data.py::get_chapter_summary
+- data.py::save_chapter_summary
+- routes.py::api_generate_summary
+- routes.py::api_read_chapter
+tests: []
+links: {}
+notes: ''

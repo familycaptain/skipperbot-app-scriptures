@@ -1,0 +1,17 @@
+kind: specification
+id: scriptures.library.a-translation-is-chosen-for-you
+title: A translation is chosen when none is named
+state: live
+autonomy: gated
+behavior: >
+  A request that does not name a translation is answered from the one that was loaded first, so a
+  reader never has to name an edition to read a chapter or run a search. In the reader the
+  translation a person last used on that device is remembered and reopened; only when they have
+  never chosen one does the app pick for them.
+implements:
+- data.py::get_default_version
+- routes.py::api_read_chapter
+- ui/ScripturesApp.jsx::ScripturesApp
+tests: []
+links: {}
+notes: ''

@@ -1,0 +1,17 @@
+kind: specification
+id: scriptures.reading.a-chapter-arrives-whole
+title: A chapter arrives whole
+state: live
+autonomy: gated
+behavior: >
+  Opening a chapter returns everything the reader can see about it in one go: its verses in order
+  with their numbers and formatting, the book's name and how many chapters it has, any study
+  material already stored for that chapter, and the household's reading positions. Nothing the
+  reader can already see requires a second request, so a chapter never appears in pieces.
+implements:
+- routes.py::api_read_chapter
+- data.py::get_chapter_verses
+- ui/ScripturesApp.jsx::ReadTab
+tests: []
+links: {}
+notes: ''

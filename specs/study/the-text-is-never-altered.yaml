@@ -1,0 +1,19 @@
+kind: specification
+id: scriptures.study.the-text-is-never-altered
+title: Generated material never alters the scripture
+state: live
+autonomy: gated
+behavior: >
+  Study material is stored beside a chapter and never in place of it: marking names, revealing a
+  pronoun and opening an aid change only what is displayed, and the verses themselves are unchanged
+  by anything a language model produced. Discarding study material, or simply not asking for it,
+  returns the chapter to exactly the text that was imported.
+implements:
+- migrations/001_initial.sql
+- migrations/003_pronouns.sql
+- ui/ScripturesApp.jsx::VerseText
+tests: []
+links: {}
+notes: >
+  The separation is the point: a household may hold this text as sacred, so generated commentary
+  must never be able to become the text.

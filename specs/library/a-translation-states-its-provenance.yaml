@@ -1,0 +1,19 @@
+kind: specification
+id: scriptures.library.a-translation-states-its-provenance
+title: A loaded translation says where it came from
+state: live
+autonomy: gated
+behavior: >
+  Every loaded translation records its abbreviation, its full name, its language, which file or
+  service it was taken from, when it was loaded, whether it holds the Old Testament, the New, or
+  both, and how many verses actually arrived. Anyone can therefore tell which edition they are
+  reading and where that text came from without inspecting the install.
+implements:
+- migrations/001_initial.sql
+- import_bible.py::_insert_into_postgres
+- routes.py::api_get_version
+tests: []
+links: {}
+notes: >
+  The verse count is provenance, not a completeness guarantee — it counts what the import managed
+  to load, which for a network import may be less than the translation contains.

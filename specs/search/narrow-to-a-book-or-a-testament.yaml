@@ -1,0 +1,16 @@
+kind: specification
+id: scriptures.search.narrow-to-a-book-or-a-testament
+title: A search can be narrowed to one book or one testament
+state: live
+autonomy: gated
+behavior: >
+  A search can be confined to a single book, or to the Old or New Testament, and both the results
+  and the reported total then cover only that range. With no narrowing given, the whole of the open
+  translation is searched.
+implements:
+- data.py::search_verses
+- data.py::count_search_results
+- routes.py::api_search
+tests: []
+links: {}
+notes: ''

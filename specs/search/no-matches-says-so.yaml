@@ -1,0 +1,14 @@
+kind: specification
+id: scriptures.search.no-matches-says-so
+title: Finding nothing says so, and names what was looked for
+state: live
+autonomy: gated
+behavior: >
+  A search that matches nothing says that nothing was found and repeats the phrase that was
+  searched for, rather than leaving an empty panel that could equally mean the search never ran.
+  While a search is running the reader is told it is in progress.
+implements:
+- ui/ScripturesApp.jsx::SearchTab
+tests: []
+links: {}
+notes: ''

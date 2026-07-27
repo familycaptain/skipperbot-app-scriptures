@@ -1,0 +1,18 @@
+kind: specification
+id: scriptures.bookmarks.positions-belong-to-the-household
+title: Reading positions belong to the household, not to a person
+state: live
+autonomy: gated
+behavior: >
+  A reading position is a named place the whole household shares — everyone sees the same ones,
+  anyone can move or remove any of them, and there are no private bookmarks. Names are unique across
+  the install, so a position called "Morning Reading" always means the same place to everybody.
+implements:
+- data.py::get_all_bookmarks
+- migrations/001_initial.sql
+- routes.py::api_list_bookmarks
+tests: []
+links: {}
+notes: >
+  Shared rather than per-person because the app was built for a household reading together; a
+  private study layer is a separate concern.

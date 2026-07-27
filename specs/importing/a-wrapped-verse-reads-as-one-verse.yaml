@@ -1,0 +1,17 @@
+kind: specification
+id: scriptures.importing.a-wrapped-verse-reads-as-one-verse
+title: A verse wrapped across a printed page reads as one verse
+state: live
+autonomy: gated
+behavior: >
+  Importing from a PDF, a verse is recognised by its printed reference and its text runs on to
+  wherever the next reference begins, with the line breaks the page imposed rejoined into
+  continuous prose and the front matter before the scripture text skipped. A PDF containing no
+  recognisable verse references is rejected with an explanation rather than imported as an empty
+  translation.
+implements:
+- import_bible.py::import_from_pdf
+- import_bible.py::_VERSE_REF_RE
+tests: []
+links: {}
+notes: ''

@@ -1,0 +1,18 @@
+kind: specification
+id: scriptures.study.who-does-this-he-mean
+title: Tapping a pronoun says who it means
+state: live
+autonomy: gated
+behavior: >
+  After a chapter's pronouns have been resolved, each pronoun is marked in place in the verses;
+  choosing one replaces it inline with who or what it refers to, and it stays replaced until the
+  reader moves to another chapter. Pronouns are matched in the order they occur in the verse, so
+  repeated pronouns are not confused with one another, and a verse the resolution says nothing about
+  is left exactly as printed.
+implements:
+- ui/ScripturesApp.jsx::buildPronounVerseMap
+- ui/ScripturesApp.jsx::VerseText
+- ui/ScripturesApp.jsx::findNextPronounMatch
+tests: []
+links: {}
+notes: ''

@@ -1,0 +1,17 @@
+kind: specification
+id: scriptures.reading.an-empty-chapter
+title: A chapter with no text shows nothing
+state: live
+autonomy: gated
+behavior: >
+  Asking for a chapter this install holds no verses for is answered as not found, and the reader is
+  left looking at the chapter heading above an empty page. This happens for a chapter beyond the end
+  of a book and for one an import never managed to load.
+implements:
+- routes.py::api_read_chapter
+- ui/ScripturesApp.jsx::ScripturesApp
+tests: []
+links: {}
+notes: >
+  Written as observed. A reader cannot currently tell a genuinely absent chapter from one lost
+  during import — recorded as a finding rather than as intent.

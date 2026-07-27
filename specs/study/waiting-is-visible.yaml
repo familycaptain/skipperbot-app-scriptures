@@ -1,0 +1,16 @@
+kind: specification
+id: scriptures.study.waiting-is-visible
+title: Waiting for an aid is visible and says what is happening
+state: live
+autonomy: gated
+behavior: >
+  Generation takes long enough to notice, so while an aid is being written the reader is shown what
+  is being worked on — summarising the chapter, identifying its people or places, resolving its
+  pronouns — rather than an unexplained pause. The scripture remains readable throughout, and a
+  pronoun resolution can be asked for without leaving the text.
+implements:
+- ui/ScripturesApp.jsx::LlmContent
+- ui/ScripturesApp.jsx::ReadTab
+tests: []
+links: {}
+notes: ''

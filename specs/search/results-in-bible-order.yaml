@@ -1,0 +1,13 @@
+kind: specification
+id: scriptures.search.results-in-bible-order
+title: Results come back in Bible order
+state: live
+autonomy: gated
+behavior: >
+  Matches are listed in canonical order — by book, then chapter, then verse — rather than ranked by
+  any notion of relevance, so a reader can follow a phrase through scripture in the order it occurs.
+implements:
+- data.py::search_verses
+tests: []
+links: {}
+notes: ''

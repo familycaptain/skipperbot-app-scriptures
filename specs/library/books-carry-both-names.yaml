@@ -1,0 +1,17 @@
+kind: specification
+id: scriptures.library.books-carry-both-names
+title: Every book carries the translation's name and the familiar one
+state: live
+autonomy: gated
+behavior: >
+  Each book is held under the name its own translation uses and under the standard English name at
+  the same time, and the reader is shown both together. A person reading a transliterated edition
+  can therefore still find Genesis, and a search result names the passage in the edition's own
+  vocabulary without becoming unrecognisable.
+implements:
+- migrations/001_initial.sql
+- import_bible.py::_insert_into_postgres
+- ui/ScripturesApp.jsx::ReadTab
+tests: []
+links: {}
+notes: ''

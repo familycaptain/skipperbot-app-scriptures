@@ -1,0 +1,20 @@
+kind: specification
+id: scriptures.study.names-in-the-text-are-live
+title: Names identified in a chapter become live in the text
+state: live
+autonomy: gated
+behavior: >
+  Once a chapter's people and places have been identified, each of those names is marked wherever it
+  appears in the verses and in the summary — people and places distinguished by colour — and
+  choosing one shows what was said about it without leaving the passage. Names are matched whole, so
+  a name inside a longer word is not marked, and a fuller form such as a name followed by a title or
+  parentage also matches the plain name. Choosing a name nothing was written about says so rather
+  than opening blank.
+implements:
+- ui/ScripturesApp.jsx::parseEntities
+- ui/ScripturesApp.jsx::buildEntityMatcher
+- ui/ScripturesApp.jsx::EntityModal
+- ui/ScripturesApp.jsx::VerseText
+tests: []
+links: {}
+notes: ''

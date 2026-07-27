@@ -1,0 +1,17 @@
+kind: specification
+id: scriptures.study.ask-for-it-again
+title: Any aid can be thrown away and asked for again
+state: live
+autonomy: gated
+behavior: >
+  A reader unhappy with a summary, people list, places list or pronoun resolution can discard the
+  stored one and have it made again; the discarded version is not shown while the new one is being
+  written. Discarding one aid leaves the other three for that chapter untouched, and a request to
+  discard anything else is refused.
+implements:
+- routes.py::api_regenerate
+- data.py::clear_chapter_field
+- ui/ScripturesApp.jsx::ScripturesApp
+tests: []
+links: {}
+notes: ''

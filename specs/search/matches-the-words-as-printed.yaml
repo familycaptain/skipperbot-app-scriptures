@@ -1,0 +1,16 @@
+kind: specification
+id: scriptures.search.matches-the-words-as-printed
+title: Search matches the words as this translation prints them
+state: live
+autonomy: gated
+behavior: >
+  Search looks for the typed characters anywhere inside a verse, ignoring capitalisation, and
+  matches the words as the open translation actually spells them — so a transliterated edition is
+  searched in its own spellings, not in English ones. Nothing is stemmed, corrected or guessed at,
+  and formatting markup is never matched, so a search only ever finds words a reader can see.
+implements:
+- data.py::search_verses
+- migrations/001_initial.sql
+tests: []
+links: {}
+notes: ''

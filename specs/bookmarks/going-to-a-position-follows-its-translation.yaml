@@ -1,0 +1,15 @@
+kind: specification
+id: scriptures.bookmarks.going-to-a-position-follows-its-translation
+title: Going to a position follows the translation it was saved in
+state: live
+autonomy: gated
+behavior: >
+  Opening a reading position takes the reader to its book and chapter, switching to the translation
+  the position was saved in when that differs from the one being read. The reader is returned to the
+  passage view, so a position chosen from the list opens as reading rather than as a list entry.
+implements:
+- ui/ScripturesApp.jsx::ScripturesApp
+- data.py::get_all_bookmarks
+tests: []
+links: {}
+notes: ''

@@ -1,0 +1,14 @@
+kind: specification
+id: scriptures.study.people-and-places-are-browsable
+title: People and places are a list to browse, not a wall of text
+state: live
+autonomy: gated
+behavior: >
+  The people and places in a chapter are presented as a list of names ordered alphabetically —
+  ignoring a leading article — with one opened at a time to read what is said about it. Any
+  introductory text belonging to no name is shown as prose above the list rather than dropped.
+implements:
+- ui/ScripturesApp.jsx::LlmContent
+tests: []
+links: {}
+notes: ''

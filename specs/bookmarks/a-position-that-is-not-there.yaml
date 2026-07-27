@@ -1,0 +1,16 @@
+kind: specification
+id: scriptures.bookmarks.a-position-that-is-not-there
+title: Acting on a position that is no longer there says so
+state: live
+autonomy: gated
+behavior: >
+  Moving, renaming or removing a reading position that no longer exists — because somebody else in
+  the household already removed it — is reported as not found rather than quietly appearing to
+  succeed. A move request that does not say where to move to is refused before anything changes.
+implements:
+- routes.py::api_move_bookmark
+- routes.py::api_update_bookmark
+- routes.py::api_delete_bookmark
+tests: []
+links: {}
+notes: ''

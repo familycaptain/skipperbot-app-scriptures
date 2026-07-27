@@ -1,0 +1,17 @@
+kind: specification
+id: scriptures.prefetch.preparation-stays-out-of-the-way
+title: Preparation stays out of the way
+state: live
+autonomy: gated
+behavior: >
+  Preparation runs as background work, away from anybody reading: opening a chapter never triggers
+  it, no one waits on it, and it never sends anyone a message about what it did. Its outcome is
+  reported to whoever ran it, and the only thing a reader notices is that a chapter opens with its
+  study material already there.
+implements:
+- prefetch.py::prefetch_scripture_summaries
+tests: []
+links: {}
+notes: >
+  Written as observed. Nothing in the app currently schedules or queues this pass despite it being
+  documented as nightly — recorded as a finding.

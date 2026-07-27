@@ -1,0 +1,15 @@
+kind: specification
+id: scriptures.importing.encrypted-modules-are-refused
+title: An encrypted module is refused, not half-read
+state: live
+autonomy: gated
+behavior: >
+  A MySword module that declares itself encrypted is refused outright with an explanation and a
+  suggested alternative, rather than being loaded as unreadable or empty verses. Nothing is written
+  to the install in that case.
+implements:
+- import_bible.py::import_mybible_file
+- import_bible.py::_read_mysword_details
+tests: []
+links: {}
+notes: ''

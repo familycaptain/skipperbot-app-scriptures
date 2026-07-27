@@ -1,0 +1,14 @@
+kind: specification
+id: scriptures.study.nothing-generated-yet-says-so
+title: An aid that does not exist says so rather than showing blank
+state: live
+autonomy: gated
+behavior: >
+  Opening a study aid that has never been generated, or whose generation failed, shows a plain
+  statement that none is available for that chapter instead of an empty panel that looks like a
+  broken screen.
+implements:
+- ui/ScripturesApp.jsx::LlmContent
+tests: []
+links: {}
+notes: ''

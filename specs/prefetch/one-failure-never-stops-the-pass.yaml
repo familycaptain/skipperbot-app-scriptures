@@ -1,0 +1,15 @@
+kind: specification
+id: scriptures.prefetch.one-failure-never-stops-the-pass
+title: One chapter failing never stops the pass
+state: live
+autonomy: gated
+behavior: >
+  A chapter that cannot be prepared — its details unreadable, or generation refused — is recorded as
+  an error and the pass moves on to the rest, so one bad chapter never costs the household every
+  other chapter. The pass ends by reporting how many were generated, how many were already held, how
+  many failed, and how many chapters it looked at.
+implements:
+- prefetch.py::prefetch_scripture_summaries
+tests: []
+links: {}
+notes: ''

@@ -1,0 +1,16 @@
+kind: specification
+id: scriptures.bookmarks.save-my-place-here
+title: Save my place here, in one action
+state: live
+autonomy: gated
+behavior: >
+  While reading, any of the household's positions can be moved to the chapter now open in a single
+  action, without leaving the passage. Who moved it last is recorded from their signed-in identity
+  and shown alongside the position, so a shared position never changes anonymously.
+implements:
+- routes.py::api_move_bookmark
+- data.py::move_bookmark
+- ui/ScripturesApp.jsx::ReadTab
+tests: []
+links: {}
+notes: ''

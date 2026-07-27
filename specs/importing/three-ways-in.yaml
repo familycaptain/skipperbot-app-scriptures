@@ -1,0 +1,19 @@
+kind: specification
+id: scriptures.importing.three-ways-in
+title: Three ways a translation can be loaded
+state: live
+autonomy: gated
+behavior: >
+  A translation can be loaded by naming a public Bible service's edition, which is fetched over the
+  internet chapter by chapter; from a local unencrypted MySword module file; or from a scriptures
+  PDF laid out with verse references. Asking for the list of editions the service offers prints the
+  available English ones without importing anything, and an unrecognised name is reported along with
+  that list rather than loading something approximate.
+implements:
+- import_bible.py::import_from_getbible
+- import_bible.py::import_mybible_file
+- import_bible.py::import_from_pdf
+- import_bible.py::_list_getbible_versions
+tests: []
+links: {}
+notes: ''

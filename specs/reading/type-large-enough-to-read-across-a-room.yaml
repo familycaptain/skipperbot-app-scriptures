@@ -1,0 +1,15 @@
+kind: specification
+id: scriptures.reading.type-large-enough-to-read-across-a-room
+title: Type large enough to read across a room
+state: live
+autonomy: gated
+behavior: >
+  Scripture can be shown at one of three sizes, all of them large, because the app is meant to be
+  readable from a sofa or a television as well as up close. The chosen size applies to scripture,
+  headings and study text alike and is remembered on that device for next time.
+implements:
+- ui/ScripturesApp.jsx::FONT_SIZES
+- ui/ScripturesApp.jsx::ScripturesApp
+tests: []
+links: {}
+notes: ''

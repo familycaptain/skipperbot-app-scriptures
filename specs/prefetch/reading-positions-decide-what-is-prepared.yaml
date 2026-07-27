@@ -1,0 +1,15 @@
+kind: specification
+id: scriptures.prefetch.reading-positions-decide-what-is-prepared
+title: The household's reading positions decide what gets prepared
+state: live
+autonomy: gated
+behavior: >
+  A background pass prepares study material for every chapter a reading position points at, plus the
+  next few chapters of the same book, so a household reading a little each day finds the chapters
+  ahead of them already done. A chapter two positions both point at is prepared once, not twice.
+implements:
+- prefetch.py::prefetch_scripture_summaries
+- prefetch.py::LOOK_AHEAD
+tests: []
+links: {}
+notes: ''

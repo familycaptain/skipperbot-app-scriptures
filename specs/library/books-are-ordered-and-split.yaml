@@ -1,0 +1,17 @@
+kind: specification
+id: scriptures.library.books-are-ordered-and-split
+title: Books are listed in canonical order, split by testament
+state: live
+autonomy: gated
+behavior: >
+  Books are always presented in canonical order rather than alphabetically, and are divided into
+  Old Testament and New Testament so a reader can find a book by where it sits rather than by
+  recalling its spelling. Each book also states how many chapters this install actually holds for
+  it.
+implements:
+- data.py::get_books
+- ui/ScripturesApp.jsx::BookPicker
+- migrations/001_initial.sql
+tests: []
+links: {}
+notes: ''

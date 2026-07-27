@@ -1,0 +1,19 @@
+kind: specification
+id: scriptures.importing.a-chapter-that-never-arrives
+title: A chapter that never arrives is left out of the count
+state: live
+autonomy: gated
+behavior: >
+  During an internet import each chapter is retried a few times, and a chapter that still cannot be
+  fetched is logged as a warning while the rest of the import continues. The translation is loaded
+  without that chapter, and the book's chapter count reflects only the chapters that actually
+  arrived, so the missing passage is absent rather than blank.
+implements:
+- import_bible.py::import_from_getbible
+- import_bible.py::_api_get
+- import_bible.py::_insert_into_postgres
+tests: []
+links: {}
+notes: >
+  Written as observed. A silently incomplete translation is a serious failure for this app and is
+  recorded as a finding, not as intent.

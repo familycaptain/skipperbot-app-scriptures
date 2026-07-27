@@ -1,0 +1,14 @@
+kind: specification
+id: scriptures.prefetch.look-ahead-stops-at-the-end-of-a-book
+title: Looking ahead stops at the end of the book
+state: live
+autonomy: gated
+behavior: >
+  Preparation looks ahead only as far as the last chapter of the book the position sits in; it does
+  not run on into the next book. A chapter the install holds no verses for is passed over rather
+  than prepared from nothing.
+implements:
+- prefetch.py::prefetch_scripture_summaries
+tests: []
+links: {}
+notes: ''

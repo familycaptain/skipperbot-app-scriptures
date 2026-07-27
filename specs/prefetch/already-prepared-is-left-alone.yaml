@@ -1,0 +1,16 @@
+kind: specification
+id: scriptures.prefetch.already-prepared-is-left-alone
+title: Anything already prepared is left alone
+state: live
+autonomy: gated
+behavior: >
+  The pass generates only what is missing: each of the four kinds of study material is checked
+  separately for each chapter, and anything already stored is counted as skipped and left exactly as
+  it is. A pass over a household that is already up to date therefore generates nothing.
+implements:
+- prefetch.py::prefetch_scripture_summaries
+- data.py::get_chapter_summary
+- data.py::get_chapter_people
+tests: []
+links: {}
+notes: ''

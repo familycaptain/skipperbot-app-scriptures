@@ -1,0 +1,13 @@
+kind: specification
+id: scriptures.bookmarks.none-yet-says-what-to-do
+title: No positions yet says what they are for
+state: live
+autonomy: gated
+behavior: >
+  With no reading positions saved, the positions screen says there are none and explains that one
+  can be created to track where the household has got to, rather than showing an empty list.
+implements:
+- ui/ScripturesApp.jsx::BookmarksTab
+tests: []
+links: {}
+notes: ''

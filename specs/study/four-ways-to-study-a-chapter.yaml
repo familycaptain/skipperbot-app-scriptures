@@ -1,0 +1,18 @@
+kind: specification
+id: scriptures.study.four-ways-to-study-a-chapter
+title: Four study aids sit beside the chapter
+state: live
+autonomy: gated
+behavior: >
+  Beside any chapter a reader can ask for a written summary of it, an account of the people in it,
+  an account of the places in it, and a resolution of its pronouns. Each is asked for separately and
+  the scripture itself is always one step away, so no aid ever replaces the text.
+implements:
+- routes.py::api_generate_summary
+- routes.py::api_generate_people
+- routes.py::api_generate_places
+- routes.py::api_generate_pronouns
+- ui/ScripturesApp.jsx::ReadTab
+tests: []
+links: {}
+notes: ''

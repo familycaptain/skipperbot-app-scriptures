@@ -1,0 +1,25 @@
+kind: specification
+id: scriptures.study.nothing-broken-is-kept
+title: A failed generation is reported, never stored
+state: live
+autonomy: gated
+behavior: >
+  If generating an aid fails or comes back empty, the reader is told it failed and nothing is
+  stored, so the next attempt generates afresh rather than serving an empty summary forever. A
+  pronoun resolution that does not come back in the expected form is recovered where it plainly can
+  be — wrapped in a code fence, or preceded by explanation — and otherwise treated as a failure
+  rather than stored as it stands.
+implements:
+- routes.py::api_generate_summary
+- routes.py::_extract_json_object
+- routes.py::_generate_pronouns_llm
+tests:
+- type: unit
+  path: tests/test_llm_endpoints_tier_migration.py
+  rubric: >
+    Drives the four generation helpers against a stubbed model: prose comes back exactly as written
+    with nothing parsed out of it; a pronoun resolution is recovered from a bare object, from one
+    inside a code fence, and from one preceded by prose; and a response with no resolution in it,
+    or an empty response, raises rather than returning something storable.
+links: {}
+notes: ''

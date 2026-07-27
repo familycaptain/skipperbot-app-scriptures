@@ -1,0 +1,14 @@
+kind: specification
+id: scriptures.prefetch.nothing-bookmarked-nothing-prepared
+title: With no reading positions, nothing is prepared
+state: live
+autonomy: gated
+behavior: >
+  With no reading positions saved, the pass does nothing at all and says so, rather than choosing
+  chapters on its own. Preparation is therefore always driven by where the household actually is in
+  its reading.
+implements:
+- prefetch.py::prefetch_scripture_summaries
+tests: []
+links: {}
+notes: ''

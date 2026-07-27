@@ -1,0 +1,19 @@
+kind: specification
+id: scriptures.search.the-count-is-the-whole-count
+title: The count is of every match, not of what is shown
+state: live
+autonomy: gated
+behavior: >
+  A search reports how many verses match in total across the translation, while returning only a
+  page of them, so a reader can tell a phrase that occurs three times from one that occurs three
+  hundred. The page returned always begins at the start of the matches unless a later position is
+  asked for.
+implements:
+- routes.py::api_search
+- data.py::count_search_results
+- data.py::search_verses
+tests: []
+links: {}
+notes: >
+  The reader's search screen shows the total but never asks for a later page, so only the first
+  page is reachable there — recorded as a finding.

@@ -1,0 +1,18 @@
+kind: specification
+id: scriptures.importing.markup-becomes-reading-formatting
+title: Module markup becomes formatting a reader can see
+state: live
+autonomy: gated
+behavior: >
+  Editorial markup carried by a MySword module is turned into what it means for a reader: words
+  supplied by the translators are italicised, words of Yeshua are marked, quoted passages and
+  section headings are set apart, footnotes become a marker that shows its note on hover, and
+  paragraph and poetry breaks are kept. A second, plain copy of every verse is stored with all
+  markup and headings removed; that copy is what search matches and what study aids are generated
+  from, so no reader ever meets a raw tag.
+implements:
+- gbf.py::process_gbf
+- import_bible.py::import_mybible_file
+tests: []
+links: {}
+notes: ''

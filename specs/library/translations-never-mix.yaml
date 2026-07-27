@@ -1,0 +1,18 @@
+kind: specification
+id: scriptures.library.translations-never-mix
+title: Nothing crosses from one translation into another
+state: live
+autonomy: gated
+behavior: >
+  Verses, book names, chapter counts, study aids and reading positions all belong to one
+  translation, so text from one edition is never shown under another's name. Switching translation
+  re-opens the same book and chapter in the new edition, and opening a reading position saved in a
+  different translation switches to that translation first.
+implements:
+- data.py::get_chapter_verses
+- data.py::get_chapter_summary
+- ui/ScripturesApp.jsx::ScripturesApp
+- migrations/001_initial.sql
+tests: []
+links: {}
+notes: ''
