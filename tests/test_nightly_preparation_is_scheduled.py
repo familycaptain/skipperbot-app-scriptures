@@ -1,15 +1,16 @@
 """The nightly preparation pass is actually asked for.
 
 `prefetch_scripture_summaries()` has always worked and its handler has always been
-registered with the dispatcher — but nothing anywhere queued it. Recurring work needs a
-`schedules` row linked to a job type, and this app had no seed migration, no lifecycle hook
-and declared no job types, while the platform mentioned `scripture_prefetch` nowhere except
-the handler registration. So the pass documented as nightly had never run on any install,
-and chapters were only ever prepared when somebody opened them.
+registered with the dispatcher — but the app shipped nothing that would ASK for it. No seed
+migration, no lifecycle hook, no declared job types, and the platform mentioned
+`scripture_prefetch` nowhere except the handler registration. On a fresh install the pass
+therefore never ran, and chapters were only prepared when somebody opened them.
 
-The bug was a missing CALLER, not broken work, so these test the calling — that a row is
-created, that it points at the job type the dispatcher polls, and that reconciling on every
-boot does not push tonight's run later each time.
+A long-running install can be in a different state: a row for this job type may already
+exist under an id this module would never guess, created by hand or by an earlier version.
+Reconciling on our own id alone would leave that one running and add a second, so the pass
+would run twice a night — the same work and the same model spend, twice. That case has its
+own class below, and it is the one that bites an install that has been alive for months.
 
 Offline: the schedules data layer is stubbed.
 
@@ -27,6 +28,14 @@ class _FakeSchedules:
         self.rows = dict(existing or {})
         self.calls = []
 
+    def list_schedules(self, active_only=True, limit=200):
+        out = []
+        for sid, row in self.rows.items():
+            if active_only and not row.get("active"):
+                continue
+            out.append({**row, "id": sid})
+        return out
+
     def get_schedule(self, sid):
         return self.rows.get(sid)
 
@@ -35,7 +44,9 @@ class _FakeSchedules:
 
     def upsert_schedule(self, sid, **kw):
         self.calls.append(sid)
-        self.rows[sid] = dict(kw)
+        # Upsert semantics: merge, so a partial update (deactivating a duplicate) does not
+        # wipe the rest of the row.
+        self.rows[sid] = {**self.rows.get(sid, {}), **kw}
         return self.rows[sid]
 
 
@@ -95,6 +106,73 @@ class ReconcilingIsSafeToRepeat(unittest.TestCase):
     def test_a_changed_time_resets_the_countdown(self):
         fake = _run({sched.SCHEDULE_ID: {"active": True, "time_of_day": "23:00"}})
         self.assertIsNotNone(fake.rows[sched.SCHEDULE_ID]["next_due"])
+
+
+class AnExistingScheduleIsAdoptedNotDuplicated(unittest.TestCase):
+    """The state a long-running install is actually in.
+
+    A row for this job type can already exist under an id this module would never guess —
+    made by hand, or by an earlier version. Keying only on our own id would leave it in
+    place and add a second, so the pass would run twice a night: the same work, and the same
+    model spend, twice.
+    """
+
+    PRIOR = {"sch-701a1058": {"title": "Scriptures nightly prefetch",
+                              "linked_entity_id": "scripture_prefetch",
+                              "linked_entity_type": "job",
+                              "active": True, "time_of_day": "02:00",
+                              "created_at": "2026-04-18"}}
+
+    def test_the_existing_row_is_reused_and_no_second_one_is_created(self):
+        fake = _run(self.PRIOR)
+        self.assertIn("sch-701a1058", fake.rows)
+        self.assertNotIn(sched.SCHEDULE_ID, fake.rows,
+                         "a second schedule was created — the pass would run twice a night")
+
+    def test_the_adopted_row_is_moved_to_the_canonical_time(self):
+        fake = _run(self.PRIOR)
+        row = fake.rows["sch-701a1058"]
+        self.assertEqual(row["time_of_day"], sched.TIME_OF_DAY)
+        self.assertTrue(row["active"])
+        self.assertIsNotNone(row["next_due"], "a time change must reset the countdown")
+
+    def test_our_own_row_wins_when_both_exist(self):
+        both = {**self.PRIOR,
+                sched.SCHEDULE_ID: {"linked_entity_id": "scripture_prefetch",
+                                    "active": True, "time_of_day": "03:00",
+                                    "created_at": "2026-08-15"}}
+        fake = _run(both)
+        self.assertTrue(fake.rows[sched.SCHEDULE_ID]["active"])
+        self.assertFalse(fake.rows["sch-701a1058"]["active"],
+                         "the duplicate was left running")
+
+    def test_a_duplicate_is_deactivated_not_deleted(self):
+        # Reversible and visible in the app — never destroy a row somebody made on purpose.
+        both = {**self.PRIOR,
+                sched.SCHEDULE_ID: {"linked_entity_id": "scripture_prefetch",
+                                    "active": True, "time_of_day": "03:00",
+                                    "created_at": "2026-08-15"}}
+        fake = _run(both)
+        self.assertIn("sch-701a1058", fake.rows, "the duplicate row was deleted")
+        self.assertFalse(fake.rows["sch-701a1058"]["active"])
+
+    def test_exactly_one_schedule_is_left_active(self):
+        for existing in ({}, self.PRIOR,
+                         {**self.PRIOR, "sch-other": {"linked_entity_id": "scripture_prefetch",
+                                                      "active": True, "time_of_day": "05:00",
+                                                      "created_at": "2026-05-01"}}):
+            with self.subTest(n=len(existing)):
+                fake = _run(existing)
+                live = [sid for sid, r in fake.rows.items()
+                        if r.get("linked_entity_id") == "scripture_prefetch" and r.get("active")]
+                self.assertEqual(len(live), 1, f"expected one active schedule, got {live}")
+
+    def test_schedules_for_other_jobs_are_untouched(self):
+        other = {"sch-backup-nightly": {"linked_entity_id": "backup", "active": True,
+                                        "time_of_day": "02:00", "created_at": "2026-01-01"}}
+        fake = _run(other)
+        self.assertTrue(fake.rows["sch-backup-nightly"]["active"])
+        self.assertEqual(fake.rows["sch-backup-nightly"]["time_of_day"], "02:00")
 
 
 class ItNeverBreaksBoot(unittest.TestCase):
