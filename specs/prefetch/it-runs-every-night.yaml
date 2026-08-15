@@ -1,0 +1,23 @@
+kind: specification
+id: scriptures.prefetch.it-runs-every-night
+title: The household wakes up to chapters already prepared
+state: live
+autonomy: gated
+behavior: >
+  The preparation pass runs once every night, in the small hours, without anybody asking for it and
+  without any setting to turn on first — installing the app is enough. It runs whether or not anyone
+  has bookmarked anything, doing nothing on a night with nothing to prepare, and it keeps running to
+  the same time each night however often the household restarts.
+implements:
+- schedule.py::ensure_schedule
+- hooks.py::register_hooks
+tests:
+- tests/test_nightly_preparation_is_scheduled.py
+links: {}
+notes: >
+  Always-on rather than conditional on there being bookmarks: bookmarks come and go, the pass already
+  answers "nothing to prepare" for an empty household, and a schedule that switches itself off is a
+  second thing to debug when preparation stops happening.
+
+  The hour is fixed rather than configurable, and kept clear of the nightly backup — both are heavy,
+  and this one makes a model call for each missing piece of study material.
