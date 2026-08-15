@@ -35,7 +35,7 @@ class TierMigration(unittest.TestCase):
     #         with the same system+user messages (prompt sentinel preserved).
     def test_all_helpers_call_chat_completion_fast(self):
         cases = [
-            (lambda: routes._generate_summary_llm("Genesis", 1, "text", "KJV"), "Summarize Genesis"),
+            (lambda: routes._generate_summary_llm("Genesis", 1, "text", "KJV"), "Genesis chapter 1"),
             (lambda: routes._generate_people_llm("Genesis", 1, "text", "KJV"), "List every person"),
             (lambda: routes._generate_places_llm("Genesis", 1, "text", "KJV"), "List every place"),
         ]

@@ -187,19 +187,32 @@ def _get_summary_model() -> str:
 def _generate_summary_llm(book_name: str, chapter: int, chapter_text: str, version_name: str = "Bible") -> str:
     """Call OpenAI to generate a chapter summary."""
 
+    # An EXECUTIVE SUMMARY, not a paraphrase. The previous prompt asked for "several
+    # paragraphs covering the chapter's narrative, key events, prayers, speeches, and
+    # actions", each on "a distinct section", and to "be factual and thorough" — which is a
+    # description of a verse-by-verse retelling, and that is what it produced. Restating
+    # every verse in slightly different words is longer than the chapter and tells a reader
+    # nothing they could not get by reading it.
     prompt = (
-        f"Summarize {book_name} chapter {chapter} from the {version_name}.\n\n"
-        f"IMPORTANT FORMATTING RULE: Separate every paragraph with a blank line "
-        f"(two newlines). Do NOT run paragraphs together.\n\n"
-        f"Write your response in a style consistent with the {version_name} — "
-        f"use the same names, spellings, and terminology that appear in this translation.\n\n"
-        f"Write several paragraphs covering the chapter's narrative, key events, "
-        f"prayers, speeches, and actions. Each paragraph should focus on a distinct "
-        f"section or theme of the chapter. Be factual and thorough.\n\n"
-        f"End with a 'Key Themes:' section listing 3-6 themes, each on its own line.\n\n"
-        f"Do not add personal interpretation or devotional commentary. "
-        f"Do not include a heading or title line. "
-        f"Use the names as they appear in the text (e.g. Yahweh, Elohim).\n\n"
+        f"Explain what happens in {book_name} chapter {chapter}, and what it is about.\n\n"
+        f"Write it the way you would explain the chapter out loud to somebody who has not "
+        f"read it: a short, plain-language account of what happens, who it happens to, and "
+        f"what the chapter is getting at. Lead with the point of the chapter, then tell "
+        f"what happened. Somebody should be able to read this instead of the chapter and "
+        f"come away knowing what it was about.\n\n"
+        f"Length: one page at most, and shorter whenever the chapter allows it. A short "
+        f"chapter gets a short summary.\n\n"
+        f"Do NOT go through the chapter verse by verse, and do NOT restate each verse in "
+        f"turn. Summarising every verse is the single most common way to get this wrong. "
+        f"Step back and describe the whole thing. Detail earns its place only when the "
+        f"chapter's point depends on it — otherwise leave it out.\n\n"
+        f"Write continuous prose, a few paragraphs, each separated by a blank line (two "
+        f"newlines). Nothing else at all: no bullet points, no numbered lists, no headings, "
+        f"no title, no bold labels, no section names, no 'Key Themes' or any other closing "
+        f"section. The summary is the entire response.\n\n"
+        f"Use the names, spellings and terminology of the {version_name} as they appear in "
+        f"the text (e.g. Yahweh, Elohim). Describe what the chapter says and does; do not "
+        f"add devotional commentary, application, or personal interpretation.\n\n"
         f"Chapter text:\n{chapter_text}"
     )
 
@@ -207,7 +220,7 @@ def _generate_summary_llm(book_name: str, chapter: int, chapter_text: str, versi
         res = chat_completion(
             tier="fast",
             messages=[
-                {"role": "system", "content": "You are a Bible study assistant. Provide clear, concise chapter summaries."},
+                {"role": "system", "content": "You explain Bible chapters in plain language — what happens and what it is about — the way a person would explain it to a friend. You write short executive summaries in continuous prose, never verse-by-verse paraphrases and never lists or sections."},
                 {"role": "user", "content": prompt},
             ],
             max_completion_tokens=16000,
