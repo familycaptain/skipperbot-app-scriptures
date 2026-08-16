@@ -1,0 +1,26 @@
+kind: specification
+id: scriptures.prefetch.looking-ahead-follows-the-reader
+title: Looking ahead follows the reader into the next book
+state: live
+autonomy: gated
+behavior: >
+  Preparation covers the chapter a reading position sits on and the five that follow it, carrying on
+  into the next book when the current one runs out — so somebody finishing a book has the opening of
+  the next one already prepared. It follows the order of the books the install actually holds rather
+  than counting upwards, so a version that skips books, or stops partway through, simply runs out at
+  its end instead of asking for books it does not have. A chapter the install holds no verses for is
+  passed over rather than prepared from nothing.
+implements:
+- prefetch.py::_chapters_ahead
+- prefetch.py::prefetch_scripture_summaries
+tests:
+- tests/test_preparation_crosses_book_boundaries.py
+links: {}
+notes: >
+  Until 2026-08 the look-ahead was three chapters and stopped at the last chapter of the book the
+  position was in. A reading position on a book's final chapter therefore prepared that one chapter
+  and nothing else — the moment a reader most needs what comes next. Reported from a live household
+  whose bookmark sat on a last chapter.
+
+  All four kinds of study material — the summary, the people, the places and the pronouns — are
+  prepared from this one walk, so the reach is the same for each.
