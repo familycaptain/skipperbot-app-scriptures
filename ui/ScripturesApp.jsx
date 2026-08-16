@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   BookOpen, Search, Bookmark, ChevronLeft, ChevronRight, ChevronDown,
-  Loader2, Plus, Trash2, X, Type, RefreshCw, Maximize2, Minimize2,
+  Loader2, Plus, Trash2, X, Type, RefreshCw, Maximize2, Minimize2, Tv,
 } from "lucide-react";
 
 /**
@@ -338,6 +338,7 @@ function ReadTab({
   allEntities, setSelectedEntity,
 }) {
   const contentRef = useRef(null);
+  const scrollRef = useRef(null);   // the pane that actually scrolls
   const pronounsByVerse = useMemo(() => buildPronounVerseMap(pronouns), [pronouns]);
 
   // Reading view: the chapter fills the window, leaving only the four view buttons and
@@ -349,16 +350,110 @@ function ReadTab({
   // app already paints modals this way, it needs no platform change, and nothing about
   // another app's layout can be affected by it.
   const [readingView, setReadingView] = useState(false);
+
+  // Remote mode — for reading on a television driven by an air-mouse remote.
+  //
+  // The remote's OK button is a LEFT CLICK wherever the pointer happens to be, not a key,
+  // so it cannot confirm a highlighted control. That rules out the usual TV focus-ring
+  // pattern and leaves the four arrows as the only aim-free input. They carry the two
+  // things done constantly — moving through the text, and moving through the reading —
+  // and everything occasional stays a click on a target made big enough to hit from a sofa.
+  //
+  // Remembered per device, so the HTPC is set up once and a laptop never sees it.
+  const [remoteMode, setRemoteMode] = useState(() => {
+    try { return localStorage.getItem("scriptures_remote_mode") === "1"; } catch { return false; }
+  });
+  const [keyProbe, setKeyProbe] = useState(null);   // diagnostic: last event seen
+  const setRemote = useCallback((on) => {
+    setRemoteMode(on);
+    try { localStorage.setItem("scriptures_remote_mode", on ? "1" : "0"); } catch { /* private mode */ }
+    if (on) setReadingView(true);
+  }, []);
+
+  // One line of travel through the reading, not two axes:
+  //
+  //   ch1 scripture  →  ch1 summary  →  ch2 scripture  →  ch2 summary  →  …
+  //
+  // Right goes forward along it, left goes back. Reading a chapter and then reading what it
+  // was about is the actual rhythm, so it is the thing a single button should do.
+  // Changing chapter is asynchronous, and loading one RESETS the view to the text — so a
+  // step that lands on a summary cannot just set the view and hope. It asks for the chapter,
+  // records where it was heading, and the effect below finishes the move once the chapter is
+  // actually there. Calling handleViewSummary() straight after goPrev() would also fetch the
+  // chapter it just left, since that function closes over the old book and chapter.
+  const [pendingView, setPendingView] = useState(null);
+
+  const stepForward = useCallback(() => {
+    if (viewMode === "summary") goNext();   // loading the chapter puts us back on the text
+    else handleViewSummary();               // generates it first if it is not prepared yet
+  }, [viewMode, goNext, handleViewSummary]);
+
+  const stepBack = useCallback(() => {
+    if (viewMode === "summary") setViewMode("scripture");
+    else { goPrev(); setPendingView("summary"); }   // back into the PREVIOUS chapter's summary
+  }, [viewMode, goPrev, setViewMode]);
+
   useEffect(() => {
-    if (!readingView) return;
-    const onKey = (e) => { if (e.key === "Escape") setReadingView(false); };
+    if (!pendingView || loading) return;
+    if (pendingView === "summary") {
+      if (summary) setViewMode("summary");
+      else handleViewSummary();     // now closes over the chapter we actually arrived at
+    }
+    setPendingView(null);
+  }, [pendingView, loading, summary, setViewMode, handleViewSummary]);
+
+  // ONE keydown listener for both. Two of them did not work: the reading-view listener
+  // fired first, its state update re-rendered, that re-registered the remote listener
+  // mid-dispatch, and a listener removed during dispatch is never called — so Escape left
+  // the reading view while remote mode stayed on. Verified in a browser, not reasoned about.
+  //
+  // The step functions are read through a ref so this registers once. They depend on
+  // handleViewSummary, which the parent redefines every render, so putting them in the
+  // dependency array would tear down and rebuild the listener constantly.
+  const keyActions = useRef({});
+  keyActions.current = { stepForward, stepBack };
+
+  useEffect(() => {
+    if (!readingView && !remoteMode) return;
+    const onKey = (e) => {
+      // Never take keys from something being typed into — the mini keyboard on the back of
+      // the remote is still a keyboard, and search boxes still need it.
+      const t = e.target;
+      const tag = (t?.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || t?.isContentEditable) return;
+
+      if (e.key === "Escape") {
+        if (remoteMode) setRemote(false);
+        setReadingView(false);
+        return;
+      }
+      if (!remoteMode) return;
+
+      setKeyProbe({ key: e.key, code: e.code, keyCode: e.keyCode });
+
+      const pane = scrollRef.current;
+      const page = pane ? Math.max(120, Math.round(pane.clientHeight * 0.85)) : 400;
+      switch (e.key) {
+        case "ArrowDown": if (pane) pane.scrollTop += page; break;
+        case "ArrowUp":   if (pane) pane.scrollTop -= page; break;
+        case "ArrowRight": keyActions.current.stepForward(); break;
+        case "ArrowLeft":  keyActions.current.stepBack(); break;
+        default: return;                 // anything else is not ours — let it through
+      }
+      e.preventDefault();   // only for keys we handled, so nothing else on the page loses them
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [readingView]);
+  }, [readingView, remoteMode, setRemote]);
+
+  // Every step lands at the top of what it just moved to.
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [viewMode]);
 
   // Scroll to top when chapter changes
   useEffect(() => {
-    if (contentRef.current) contentRef.current.scrollTop = 0;
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [book, chapter]);
 
 
@@ -401,6 +496,15 @@ function ReadTab({
           className="ml-auto inline-flex items-center gap-2 px-3 py-2 text-sm rounded bg-gray-700 hover:bg-gray-600 text-gray-200"
         >
           <Maximize2 size={15} /> Read
+        </button>
+
+        <button
+          onClick={() => setRemote(true)}
+          title="Remote mode — read with the arrow keys on a television"
+          aria-label="Enter remote mode"
+          className="ml-2 inline-flex items-center gap-2 px-3 py-2 text-sm rounded bg-gray-700 hover:bg-gray-600 text-gray-200"
+        >
+          <Tv size={15} /> TV
         </button>
       </div>
       )}
@@ -453,7 +557,7 @@ function ReadTab({
           { key: "places",    label: "Places",     handler: () => { if (viewMode !== "places") handleViewPlaces(); else setViewMode("places"); } },
         ].map((btn, idx, arr) => (
           <button key={btn.key} onClick={btn.handler}
-            className={`px-4 py-1.5 text-sm font-medium border ${
+            className={`${remoteMode ? "px-8 py-4 text-xl" : "px-4 py-1.5 text-sm"} font-medium border ${
               idx === 0 ? "rounded-l-lg" : idx === arr.length - 1 ? "rounded-r-lg" : ""
             } ${
               viewMode === btn.key
@@ -466,12 +570,13 @@ function ReadTab({
 
         {readingView && (
           <button
-            onClick={() => setReadingView(false)}
-            title="Leave reading view (Esc)"
+            onClick={() => { setRemote(false); setReadingView(false); }}
+            title={remoteMode ? "Leave remote mode and reading view (Esc)" : "Leave reading view (Esc)"}
             aria-label="Leave reading view"
-            className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded bg-gray-700 hover:bg-gray-600 text-gray-200"
+            className={`ml-auto inline-flex items-center gap-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 ${
+              remoteMode ? "px-8 py-4 text-xl" : "px-3 py-1.5 text-sm"}`}
           >
-            <Minimize2 size={15} /> Exit
+            <Minimize2 size={remoteMode ? 22 : 15} /> Exit
           </button>
         )}
 
@@ -501,7 +606,7 @@ function ReadTab({
       </div>
 
       {/* Content area */}
-      <div className="flex-1 overflow-y-auto px-4 pb-8">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-8">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="animate-spin text-gray-500" size={32} />
@@ -540,16 +645,40 @@ function ReadTab({
         ) : null}
       </div>
 
+      {/* What the buttons do. On a television the screen has to say so — the remote has no
+          labels, and the person holding it did not necessarily set this up. */}
+      {remoteMode && (
+        <div className="shrink-0 px-4 py-2 border-t border-gray-800 bg-gray-900/80 flex items-center justify-center gap-6 text-sm text-gray-400">
+          <span>&#9664; &#9654; <span className="text-gray-500">chapter &amp; summary</span></span>
+          <span>&#9650; &#9660; <span className="text-gray-500">scroll</span></span>
+          <span className="text-gray-500">tap a tab to switch &middot; Esc leaves</span>
+          <button
+            onClick={() => setKeyProbe(keyProbe ? null : { key: "(press a button)", code: "", keyCode: "" })}
+            className="text-gray-600 hover:text-gray-300 underline decoration-dotted"
+            title="Show what each remote button actually sends"
+          >
+            keys
+          </button>
+          {keyProbe && (
+            <span className="font-mono text-xs text-amber-400">
+              key={String(keyProbe.key)} code={String(keyProbe.code)} which={String(keyProbe.keyCode)}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Prev / Next navigation */}
       <div className="flex items-center justify-between px-4 py-3 border-t border-gray-700 bg-gray-800 shrink-0">
         <button onClick={goPrev} disabled={book === 1 && chapter === 1}
-          className="flex items-center gap-2 px-5 py-3 text-lg rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 disabled:opacity-30 transition-colors">
-          <ChevronLeft size={24} /> Previous
+          className={`flex items-center gap-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 disabled:opacity-30 transition-colors ${
+            remoteMode ? "px-8 py-5 text-2xl" : "px-5 py-3 text-lg"}`}>
+          <ChevronLeft size={remoteMode ? 32 : 24} /> Previous
         </button>
         <span className="text-sm text-gray-500">{chapter} / {chapterCount}</span>
         <button onClick={goNext} disabled={book === 66 && chapter === chapterCount}
-          className="flex items-center gap-2 px-5 py-3 text-lg rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 disabled:opacity-30 transition-colors">
-          Next <ChevronRight size={24} />
+          className={`flex items-center gap-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 disabled:opacity-30 transition-colors ${
+            remoteMode ? "px-8 py-5 text-2xl" : "px-5 py-3 text-lg"}`}>
+          Next <ChevronRight size={remoteMode ? 32 : 24} />
         </button>
       </div>
 

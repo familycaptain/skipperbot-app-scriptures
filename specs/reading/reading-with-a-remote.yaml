@@ -1,0 +1,35 @@
+kind: specification
+id: scriptures.reading.reading-with-a-remote
+title: Reading on a television with a remote control
+state: live
+autonomy: gated
+behavior: >
+  A reader on a television can turn on a mode driven by the four arrow keys alone, so nothing has to
+  be aimed at to keep reading. Up and down move through the text a screenful at a time. Right and left
+  move along one continuous line of travel through the reading — the chapter, then what that chapter
+  was about, then the next chapter, then what that one was about — so the same button carries somebody
+  through both the text and its summary without choosing between them. Every step arrives at the top
+  of what it moved to. The mode is announced on screen, since a remote has no labels, and it says
+  which button does what. Leaving it takes one key or one button. It is remembered on the device that
+  turned it on, so a television is set up once and no other machine is affected.
+
+  While it is on, the buttons that still need pointing at — switching to the people or places, and
+  leaving — are drawn large enough to hit from across a room, and everything the pointer could do
+  before it still can, including opening a person, place or pronoun.
+implements:
+- ui/ScripturesApp.jsx::ReaderTab
+tests: []
+links: {}
+notes: >
+  Written for an air-mouse remote whose OK button is a left click wherever the pointer happens to be
+  rather than a key. That rules out the usual television pattern of moving a highlight with the arrows
+  and confirming with OK — the click lands under the pointer, not on the highlight — so the arrows
+  carry the constant actions and the pointer keeps the occasional ones, with the targets enlarged.
+
+  Keys are taken only while the mode is on, and never from a field being typed into: the remote has a
+  keyboard on its back, and an app that swallows keys page-wide is a fault this platform has had
+  before.
+
+  The mode also shows, on request, exactly which key each button on the remote sends — added because
+  what a given remote emits cannot be known in advance and guessing it wrong is invisible until
+  somebody is sitting in front of the television.
