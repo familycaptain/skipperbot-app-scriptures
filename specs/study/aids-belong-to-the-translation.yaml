@@ -4,14 +4,34 @@ title: A study aid belongs to the translation it was written from
 state: live
 autonomy: gated
 behavior: >
-  Study material is stored against the translation it was generated from and is written using that
-  translation's own names and spellings, so a summary never renders divine or personal names in a
-  form the reader's edition does not use. Reading the same chapter in another translation generates
-  and keeps its own material.
+  Study material is stored against the translation it was generated from and is written in that
+  translation's own vocabulary — not only its spelling of names, but the words it chooses for the
+  things translations disagree about: the divine name and its titles, the covenant writings and
+  commandments, the Messiah, the appointed times, and the words for law, grace and assembly. Where a
+  summary has to name something the chapter does not spell out, it uses that translation's term
+  rather than the one most English editions use, so material never quietly reads a chapter back in
+  another tradition's language. Reading the same chapter in another translation generates and keeps
+  its own material. This holds for all four kinds — the summary, the people, the places, and the
+  pronoun replacements a reader sees inline in the verse.
 implements:
 - data.py::save_chapter_summary
+- routes.py::_translation_voice
+- routes.py::_version_label
 - routes.py::_generate_summary_llm
 - routes.py::_generate_people_llm
-tests: []
+- routes.py::_generate_places_llm
+- routes.py::_generate_pronouns_llm
+tests:
+- tests/test_study_material_keeps_the_translations_voice.py
 links: {}
-notes: ''
+notes: >
+  Reported from a household reading a translation that renders the covenant writings as Torah, whose
+  summary came back discussing "the Law" — vocabulary belonging to a different tradition. The
+  instruction had been "use the same names, spellings, and terminology that appear in this
+  translation", which a model treats as a preference and then overrides with whatever register
+  dominates its training.
+
+  The instruction deliberately prescribes no vocabulary of its own. Naming particular words would be
+  right for one translation and wrong for the next; the chapter text is supplied with the request, so
+  the translation in front of the model is the authority. Its name AND abbreviation are given, since
+  the abbreviation is what a model is most likely to recognise.

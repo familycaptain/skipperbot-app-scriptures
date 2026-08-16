@@ -158,7 +158,7 @@ async def api_generate_summary(request: Request):
     book_info = await asyncio.to_thread(_dl.get_book, version_id, book)
     book_name = book_info["name_english"] if book_info else f"Book {book}"
     version_info = await asyncio.to_thread(_dl.get_version, version_id)
-    version_name = version_info["name"] if version_info else "Bible"
+    version_name = _version_label(version_info)
 
     chapter_text = " ".join(v["text"] for v in verses)
 
@@ -176,6 +176,53 @@ async def api_generate_summary(request: Request):
     await asyncio.to_thread(_dl.save_chapter_summary, version_id, book, chapter, summary, model_name)
 
     return {"summary": summary, "cached": False}
+
+
+def _version_label(version_info) -> str:
+    """How to name the translation to the model — its name AND its abbreviation.
+
+    The abbreviation is the part a model is most likely to recognise ("TS2009", "KJV"),
+    and recognising WHICH translation is what lets it match the right vocabulary.
+    """
+    if not version_info:
+        return "Bible"
+    name = (version_info.get("name") or "").strip()
+    abbrev = (version_info.get("abbreviation") or "").strip()
+    if name and abbrev and abbrev.lower() not in name.lower():
+        return f"{name} ({abbrev})"
+    return name or abbrev or "Bible"
+
+
+def _translation_voice(version_name: str) -> str:
+    """The instruction that keeps generated text in the translation's own vocabulary.
+
+    Shared by all four generators so they cannot drift apart, and stated far more firmly
+    than the line it replaces ("use the same names, spellings, and terminology"), which a
+    model reads as a mild preference and then overrides with whatever wording dominates its
+    training — reliably the King James / mainstream-Christian register. Reported from a real
+    household: a summary of a translation that says Torah came back talking about "the Law".
+
+    Deliberately names no vocabulary of its own. Prescribing "say Torah, not Law" would be
+    correct for one translation and wrong for the next; the chapter text is in the prompt,
+    so the translation in front of it is the authority.
+    """
+    return (
+        f"VOCABULARY — this matters as much as the content. You are working from the "
+        f"{version_name}, and everything you write must sound like it came from that "
+        f"translation.\n"
+        f"- Take your wording from the chapter text below. It shows you how this translation "
+        f"renders divine names and titles, people and places, and its key terms.\n"
+        f"- Where you must name something the chapter does not spell out, use the term THIS "
+        f"translation uses for it — not the one that is most familiar to you, and not the one "
+        f"most English Bibles use. Translations differ sharply on exactly these: the divine "
+        f"name and its titles, the covenant writings and commandments, the Messiah and his "
+        f"name, the appointed times and festivals, and the words for law, grace and "
+        f"assembly.\n"
+        f"- Do not translate this version's vocabulary into another tradition's. If it uses a "
+        f"Hebrew or transliterated form, keep it; if it uses an anglicised one, keep that. "
+        f"Silently swapping in the more common equivalent misrepresents the translation "
+        f"somebody deliberately chose to read."
+    )
 
 
 def _get_summary_model() -> str:
@@ -210,9 +257,9 @@ def _generate_summary_llm(book_name: str, chapter: int, chapter_text: str, versi
         f"newlines). Nothing else at all: no bullet points, no numbered lists, no headings, "
         f"no title, no bold labels, no section names, no 'Key Themes' or any other closing "
         f"section. The summary is the entire response.\n\n"
-        f"Use the names, spellings and terminology of the {version_name} as they appear in "
-        f"the text (e.g. Yahweh, Elohim). Describe what the chapter says and does; do not "
-        f"add devotional commentary, application, or personal interpretation.\n\n"
+        f"{_translation_voice(version_name)}\n\n"
+        f"Describe what the chapter says and does; do not add devotional commentary, "
+        f"application, or personal interpretation.\n\n"
         f"Chapter text:\n{chapter_text}"
     )
 
@@ -259,7 +306,7 @@ async def api_generate_people(request: Request):
         book_info = await asyncio.to_thread(_dl.get_book, version_id, book)
         book_name = book_info["name_english"] if book_info else f"Book {book}"
         version_info = await asyncio.to_thread(_dl.get_version, version_id)
-        version_name = version_info["name"] if version_info else "Bible"
+        version_name = _version_label(version_info)
         chapter_text = " ".join(v["text"] for v in verses)
 
         result = await asyncio.to_thread(_generate_people_llm, book_name, chapter, chapter_text, version_name)
@@ -284,8 +331,7 @@ def _generate_people_llm(book_name: str, chapter: int, chapter_text: str, versio
         f"List every person mentioned in {book_name} chapter {chapter} from the {version_name}.\n\n"
         f"IMPORTANT FORMATTING RULE: Separate every paragraph with a blank line "
         f"(two newlines). Do NOT run paragraphs together.\n\n"
-        f"Write your response in a style consistent with the {version_name} — "
-        f"use the same names, spellings, and terminology that appear in this translation.\n\n"
+        f"{_translation_voice(version_name)}\n\n"
         f"For each person, write one paragraph that includes:\n"
         f"- Their name (bold using **Name**)\n"
         f"- Who they were (their role, lineage, or title)\n"
@@ -343,7 +389,7 @@ async def api_generate_places(request: Request):
         book_info = await asyncio.to_thread(_dl.get_book, version_id, book)
         book_name = book_info["name_english"] if book_info else f"Book {book}"
         version_info = await asyncio.to_thread(_dl.get_version, version_id)
-        version_name = version_info["name"] if version_info else "Bible"
+        version_name = _version_label(version_info)
         chapter_text = " ".join(v["text"] for v in verses)
 
         result = await asyncio.to_thread(_generate_places_llm, book_name, chapter, chapter_text, version_name)
@@ -368,8 +414,7 @@ def _generate_places_llm(book_name: str, chapter: int, chapter_text: str, versio
         f"List every place mentioned or implied in {book_name} chapter {chapter} from the {version_name}.\n\n"
         f"IMPORTANT FORMATTING RULE: Separate every paragraph with a blank line "
         f"(two newlines). Do NOT run paragraphs together.\n\n"
-        f"Write your response in a style consistent with the {version_name} — "
-        f"use the same names, spellings, and terminology that appear in this translation.\n\n"
+        f"{_translation_voice(version_name)}\n\n"
         f"For each place, write one paragraph that includes:\n"
         f"- The place name (bold using **Name**)\n"
         f"- Where it is (geographic region, modern-day location if known)\n"
@@ -428,7 +473,7 @@ async def api_generate_pronouns(request: Request):
         book_info = await asyncio.to_thread(_dl.get_book, version_id, book)
         book_name = book_info["name_english"] if book_info else f"Book {book}"
         version_info = await asyncio.to_thread(_dl.get_version, version_id)
-        version_name = version_info["name"] if version_info else "Bible"
+        version_name = _version_label(version_info)
 
         result = await asyncio.to_thread(_generate_pronouns_llm, book_name, chapter, verses, version_name)
         model_name = _get_summary_model()
@@ -458,6 +503,7 @@ def _generate_pronouns_llm(book_name: str, chapter: int, verses: list[dict], ver
         f"- Inside each verse, list instances in exact left-to-right order.\n"
         f"- `text` must be the exact pronoun text from the verse, preserving case.\n"
         f"- `replacement` must be the short text that should replace that single pronoun in the verse, using names/spellings from this translation.\n"
+        f"- Names and titles in `replacement` are read inline in the verse itself, so they must match this translation exactly.\n"
         f"- For possessives, make `replacement` possessive as it should appear inline (for example `Dawiḏ's`, `יהוה's`, `the priests'`).\n"
         f"- Keep replacements concise. Do not explain significance.\n"
         f"- If a verse has no resolvable pronouns, omit that verse from the JSON.\n\n"

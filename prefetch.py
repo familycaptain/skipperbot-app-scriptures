@@ -98,7 +98,10 @@ def prefetch_scripture_summaries() -> str:
             logger.error("SCRIPTURE_PREFETCH: Cannot load metadata for bookmark %s: %s", bm.get("id"), e)
             errors += 1
             continue
-        version_name = version_info["name"] if version_info else "Bible"
+        # Same label the interactive path builds, so a chapter prepared overnight and one
+        # generated on demand are told about the translation identically.
+        from apps.scriptures.routes import _version_label
+        version_name = _version_label(version_info)
 
         for book, chapter, book_info in _chapters_ahead(
                 version_id, start_book, base_chapter, LOOK_AHEAD + 1, books_cache):

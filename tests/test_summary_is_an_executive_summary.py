@@ -94,9 +94,13 @@ class WhatWasWorthKeepingIsKept(unittest.TestCase):
     """The rewrite must not drop the constraints that were already right."""
 
     def test_it_still_follows_the_translations_wording(self):
+        # It used to assert the hint "(e.g. Yahweh, Elohim)". That hint has gone: naming one
+        # translation's vocabulary is guidance for that family and misdirection for the
+        # rest. What must survive is that the translation is NAMED and its wording is
+        # binding — see test_study_material_keeps_the_translations_voice for the detail.
         p = _prompt(version="Cepher")
         self.assertIn("Cepher", p)
-        self.assertIn("Yahweh", p)          # the worked example of translation-specific naming
+        self.assertIn("VOCABULARY", p)
 
     def test_it_still_refuses_devotional_commentary(self):
         self.assertIn("devotional commentary", _prompt().lower())
