@@ -1,0 +1,23 @@
+kind: specification
+id: scriptures.reading.fills-the-window
+title: Reading a chapter can take the whole window
+state: live
+autonomy: gated
+behavior: >
+  A reader can put the chapter on its own, filling the window: the household bar, the app's own
+  toolbars, the version and chapter pickers and the conversation panel all go, leaving the chapter,
+  the four buttons that switch between the text and its study material, and the buttons for the
+  previous and next chapter. Leaving it is one button, or the escape key, and puts everything back
+  exactly as it was — the same chapter, the same one of the four views, the same place on the page.
+implements:
+- ui/ScripturesApp.jsx::ReaderTab
+tests: []
+links: {}
+notes: >
+  Buttons that CHANGE something — regenerating a summary, analysing pronouns — are deliberately absent
+  while reading. They are authoring actions, and this view is for reading; they are a button-press
+  away in the normal view.
+
+  Built as an overlay the app paints itself rather than by asking the platform to hide its chrome:
+  the app already draws its dialogs that way, it needs no platform change, and nothing about any
+  other app's layout can be disturbed by it.

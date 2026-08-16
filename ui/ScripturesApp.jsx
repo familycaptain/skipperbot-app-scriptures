@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   BookOpen, Search, Bookmark, ChevronLeft, ChevronRight, ChevronDown,
-  Loader2, Plus, Trash2, X, Type, RefreshCw,
+  Loader2, Plus, Trash2, X, Type, RefreshCw, Maximize2, Minimize2,
 } from "lucide-react";
 
 /**
@@ -340,6 +340,22 @@ function ReadTab({
   const contentRef = useRef(null);
   const pronounsByVerse = useMemo(() => buildPronounVerseMap(pronouns), [pronouns]);
 
+  // Reading view: the chapter fills the window, leaving only the four view buttons and
+  // Previous/Next. Everything else — the chapter picker, the taskbar, the chat panel —
+  // is out of the way, because reading a long chapter in a 60%-width column beside a chat
+  // transcript is the thing this app is worst at.
+  //
+  // Done with a fixed overlay rather than by asking the platform to hide its chrome: the
+  // app already paints modals this way, it needs no platform change, and nothing about
+  // another app's layout can be affected by it.
+  const [readingView, setReadingView] = useState(false);
+  useEffect(() => {
+    if (!readingView) return;
+    const onKey = (e) => { if (e.key === "Escape") setReadingView(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [readingView]);
+
   // Scroll to top when chapter changes
   useEffect(() => {
     if (contentRef.current) contentRef.current.scrollTop = 0;
@@ -347,8 +363,14 @@ function ReadTab({
 
 
   return (
-    <div className="flex flex-col h-full" ref={contentRef}>
-      {/* Nav bar: version, book, chapter */}
+    <div
+      className={readingView
+        ? "fixed inset-0 z-40 flex flex-col bg-gray-900"
+        : "flex flex-col h-full"}
+      ref={contentRef}
+    >
+      {/* Nav bar: version, book, chapter — the reading view is defined by its absence */}
+      {!readingView && (
       <div className="flex items-center gap-2 p-3 bg-gray-800 border-b border-gray-700 flex-wrap shrink-0 relative z-10">
         {versions.length > 1 && (
           <select value={versionId} onChange={e => setVersionId(e.target.value)}
@@ -371,7 +393,17 @@ function ReadTab({
             ))}
           </select>
         </div>
+
+        <button
+          onClick={() => setReadingView(true)}
+          title="Reading view — fill the window"
+          aria-label="Enter reading view"
+          className="ml-auto inline-flex items-center gap-2 px-3 py-2 text-sm rounded bg-gray-700 hover:bg-gray-600 text-gray-200"
+        >
+          <Maximize2 size={15} /> Read
+        </button>
       </div>
+      )}
 
       {/* Book picker modal */}
       {showBookPicker && (
@@ -432,7 +464,18 @@ function ReadTab({
           </button>
         ))}
 
-        {viewMode !== "scripture" && (
+        {readingView && (
+          <button
+            onClick={() => setReadingView(false)}
+            title="Leave reading view (Esc)"
+            aria-label="Leave reading view"
+            className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded bg-gray-700 hover:bg-gray-600 text-gray-200"
+          >
+            <Minimize2 size={15} /> Exit
+          </button>
+        )}
+
+        {!readingView && viewMode !== "scripture" && (
           <button onClick={() => handleRegenerate(viewMode)}
             title="Regenerate"
             className="ml-2 p-1.5 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors">
@@ -440,7 +483,7 @@ function ReadTab({
           </button>
         )}
 
-        {viewMode === "scripture" && (
+        {!readingView && viewMode === "scripture" && (
           <button
             onClick={() => (pronouns !== null ? handleRegenerate("pronouns") : handleGeneratePronouns())}
             disabled={pronounsLoading}
