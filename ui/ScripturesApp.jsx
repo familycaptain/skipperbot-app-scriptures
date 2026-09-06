@@ -151,6 +151,20 @@ export default function ScripturesApp({ appId, userId, onTitle, refreshKey }) {
 
   useEffect(() => { loadChapter(); }, [loadChapter]);
 
+  // The household's reading aid. Held here because three different places render text a
+  // reader sees — the verses, the study material, and the panel that opens on a person —
+  // and they do not share a component.
+  const [wordMappings, setWordMappings] = useState([]);
+  const wordMapper = useMemo(() => buildWordMapper(wordMappings), [wordMappings]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API}/word-mappings`);
+        setWordMappings((await res.json()).mappings || []);
+      } catch (e) { console.error("Failed to load word mappings", e); }
+    })();
+  }, []);
+
   // Where the reader is RIGHT NOW, refreshed every render. Generating study material is a
   // model call taking seconds, and the reader can move on while it runs — pressing on
   // through chapters is the normal rhythm, especially with a remote. Without this, a
@@ -321,7 +335,7 @@ export default function ScripturesApp({ appId, userId, onTitle, refreshKey }) {
                   places, placesLoading, handleViewPlaces,
                   pronouns, pronounsLoading, handleGeneratePronouns, revealedPronouns, setRevealedPronouns,
                   handleRegenerate, bookmarks, bookName,
-                  goNext, goPrev, moveBookmark, goToBookmark, fs,
+                  goNext, goPrev, moveBookmark, goToBookmark, fs, wordMapper,
                   showBookPicker, setShowBookPicker, userId,
                   allEntities, setSelectedEntity }}
           />
@@ -333,7 +347,7 @@ export default function ScripturesApp({ appId, userId, onTitle, refreshKey }) {
 
     {selectedEntity && (
       <EntityModal entityName={selectedEntity} allEntities={allEntities}
-        onClose={() => setSelectedEntity(null)} fs={fs} />
+        onClose={() => setSelectedEntity(null)} fs={fs} wordMapper={wordMapper} />
     )}
   </div>
 );
@@ -352,7 +366,7 @@ function ReadTab({
   places, placesLoading, handleViewPlaces,
   pronouns, pronounsLoading, handleGeneratePronouns, revealedPronouns, setRevealedPronouns,
   handleRegenerate, bookmarks, bookName,
-  goNext, goPrev, moveBookmark, goToBookmark, fs,
+  goNext, goPrev, moveBookmark, goToBookmark, fs, wordMapper,
   showBookPicker, setShowBookPicker, userId,
   allEntities, setSelectedEntity,
 }) {
@@ -379,17 +393,6 @@ function ReadTab({
   // and everything occasional stays a click on a target made big enough to hit from a sofa.
   //
   // Remembered per device, so the HTPC is set up once and a laptop never sees it.
-  const [wordMappings, setWordMappings] = useState([]);
-  const wordMapper = useMemo(() => buildWordMapper(wordMappings), [wordMappings]);
-  const loadWordMappings = useCallback(async () => {
-    try {
-      const res = await fetch(`${API}/word-mappings`);
-      const data = await res.json();
-      setWordMappings(data.mappings || []);
-    } catch (e) { console.error("Failed to load word mappings", e); }
-  }, []);
-  useEffect(() => { loadWordMappings(); }, [loadWordMappings]);
-
   const [remoteMode, setRemoteMode] = useState(() => {
     try { return localStorage.getItem("scriptures_remote_mode") === "1"; } catch { return false; }
   });
@@ -998,13 +1001,15 @@ function VerseText({ html, allEntities, pronounInstances, revealedPronouns, onPr
     <span className={className}>
       {segments.map((seg, i) => {
         if (seg.type === "entity") {
+          // The link still resolves on the REAL name — only what the reader sees changes,
+          // so opening a person still finds them under the name the text uses.
           return (
             <span
               key={i}
               onClick={() => onEntityClick(seg.entityName)}
               style={getEntityLinkStyle(seg.entityType)}
             >
-              {seg.content}
+              {wordMapper ? wordMapper(seg.content) : seg.content}
             </span>
           );
         }
@@ -1020,7 +1025,9 @@ function VerseText({ html, allEntities, pronounInstances, revealedPronouns, onPr
               onClick={isRevealed ? undefined : () => onPronounReveal(seg.pronounKey)}
               style={isRevealed ? getPronounReplacementStyle() : getEntityLinkStyle("pronoun")}
             >
-              {isRevealed ? seg.replacement : seg.content}
+              {wordMapper
+                ? wordMapper(isRevealed ? seg.replacement : seg.content)
+                : (isRevealed ? seg.replacement : seg.content)}
             </span>
           );
         }
@@ -1200,10 +1207,13 @@ function LlmContent({ content, isLoading, loadingLabel, emptyLabel, fs, collapsi
 //  Entity Detail Modal
 // ═════════════════════════════════════════════════════════════════════════════
 
-function EntityModal({ entityName, allEntities, onClose, fs }) {
+function EntityModal({ entityName, allEntities, onClose, fs, wordMapper }) {
+  // Looked up on the REAL name, shown with the household's words — a reader who clicked
+  // "King Aḥashwĕrosh" should not be answered by a panel headed "Sovereign Aḥashwĕrosh".
   const info = allEntities.find(
     e => e.name.toLowerCase() === entityName.toLowerCase()
   );
+  const show = (text) => (wordMapper && typeof text === "string" ? wordMapper(text) : text);
 
   return (
     <div
@@ -1216,7 +1226,7 @@ function EntityModal({ entityName, allEntities, onClose, fs }) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700 shrink-0">
-          <h3 className={`${fs.summary} font-bold text-blue-300 leading-snug`}>{entityName}</h3>
+          <h3 className={`${fs.summary} font-bold text-blue-300 leading-snug`}>{show(entityName)}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white ml-4 shrink-0">
             <X size={22} />
           </button>
@@ -1226,7 +1236,7 @@ function EntityModal({ entityName, allEntities, onClose, fs }) {
           {info && info.body.length > 0 ? (
             info.body.map((para, i) => (
               <p key={i} className="mb-3" dangerouslySetInnerHTML={{
-                __html: para.replace(/\*\*(.+?)\*\*/g, '<strong class="text-blue-300">$1</strong>')
+                __html: show(para).replace(/\*\*(.+?)\*\*/g, '<strong class="text-blue-300">$1</strong>')
               }} />
             ))
           ) : (

@@ -117,10 +117,28 @@ class WhereItIsApplied(unittest.TestCase):
         self.assertIn("createTreeWalker", self.src)
         self.assertIn("NodeFilter.SHOW_TEXT", self.src)
 
-    def test_entity_and_pronoun_spans_keep_the_real_words(self):
-        # Mapping is applied to plain-text segments only, so highlighting still matches the
-        # text and a revealed pronoun still shows the name the translation uses.
+    def test_a_highlighted_name_is_mapped_too(self):
+        # First cut mapped only plain text, so "Sovereign Aḥashwĕrosh" — where Sovereign is
+        # part of the highlighted name — was the ONE place the word did not change, which is
+        # exactly where the household most wanted it. Reported from the television.
+        self.assertIn("{wordMapper ? wordMapper(seg.content) : seg.content}", self.src)
+
+    def test_plain_text_is_mapped(self):
         self.assertIn('seg.type === "text" && wordMapper', self.src)
+
+    def test_a_revealed_pronoun_is_mapped(self):
+        # It is read inline in the verse, so it has to match the words around it.
+        self.assertIn("wordMapper(isRevealed ? seg.replacement : seg.content)", self.src)
+
+    def test_the_link_still_resolves_on_the_real_name(self):
+        # Only what is SHOWN changes: clicking a person must still find them under the name
+        # the translation uses, or the panel opens empty.
+        self.assertIn("onClick={() => onEntityClick(seg.entityName)}", self.src)
+
+    def test_every_place_a_reader_sees_text_gets_the_mapper(self):
+        # verses, the three study views, and the panel that opens on a person.
+        self.assertIn("wordMapper={wordMapper} />", self.src)   # EntityModal
+        self.assertEqual(self.src.count("<LlmContent wordMapper={wordMapper}"), 3)
 
     def test_a_failure_never_stops_the_verse_rendering(self):
         start = self.src.index("function mapHtml(")

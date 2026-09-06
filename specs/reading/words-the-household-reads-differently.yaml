@@ -16,8 +16,9 @@ behavior: >
 
   Nothing is changed in the text itself. Searching still finds the word the translation actually uses,
   everything Skipper writes about a chapter is still written from what it really says, and turning the
-  rules off returns the reading to the translation exactly as published. A person or place keeps the
-  name the text gives it.
+  rules off returns the reading to the translation exactly as published. The change reaches every
+  place a reader sees the word — including inside a highlighted person or place, and the panel that
+  opens on one — while what is clicked still finds that person under the name the translation uses.
 implements:
 - ui/ScripturesApp.jsx::WordsTab
 - ui/ScripturesApp.jsx::buildWordMapper
@@ -35,3 +36,7 @@ notes: >
   Two details are easy to get wrong and invisible until a real chapter is read: applying rules in the
   order they were typed turns "sovereigness" into "kingess", and one rule per capitalisation would
   mean three rules for every word.
+
+  A third only showed up on the television: mapping plain text alone left a word untouched wherever it
+  formed part of a highlighted name — "Sovereign Aḥashwĕrosh" — which is precisely where a household
+  renaming a title most wants it changed.
