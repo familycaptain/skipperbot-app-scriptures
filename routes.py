@@ -683,3 +683,54 @@ async def api_delete_bookmark(bookmark_id: str):
     if not ok:
         raise HTTPException(404, "Bookmark not found")
     return {"ok": True}
+
+
+# --- Word mappings (reading aid) ---
+#
+# Display only. Nothing here touches stored verses: the mapping is applied as the text is
+# drawn, so search still finds the word the translation actually uses and everything
+# generated from a chapter still reads the real text.
+
+@router.get("/word-mappings")
+async def api_list_word_mappings():
+    mappings = await asyncio.to_thread(_dl.list_word_mappings)
+    return {"mappings": mappings, "count": len(mappings)}
+
+
+@router.post("/word-mappings")
+async def api_create_word_mapping(request: Request):
+    body = await request.json()
+    source = (body.get("source") or "").strip()
+    replacement = (body.get("replacement") or "").strip()
+    if not source or not replacement:
+        raise HTTPException(400, "Both a word and its replacement are required.")
+    who = (current_principal(request) or {}).get("name", "")
+    try:
+        created = await asyncio.to_thread(_dl.create_word_mapping, source, replacement, who)
+    except Exception as exc:
+        # The unique index on lower(source) is the only expected failure here, and the
+        # useful answer names the word rather than the constraint.
+        if "idx_word_mappings_source" in str(exc) or "duplicate key" in str(exc).lower():
+            raise HTTPException(409, f"There is already a rule for “{source}”.")
+        raise
+    return created
+
+
+@router.patch("/word-mappings/{mapping_id}")
+async def api_update_word_mapping(mapping_id: str, request: Request):
+    body = await request.json()
+    updates = {k: v for k, v in body.items() if k in ("source", "replacement", "active")}
+    if not updates:
+        raise HTTPException(400, "Nothing to change.")
+    if "source" in updates and not (updates["source"] or "").strip():
+        raise HTTPException(400, "A rule needs a word to match.")
+    if "replacement" in updates and not (updates["replacement"] or "").strip():
+        raise HTTPException(400, "A rule needs a replacement.")
+    await asyncio.to_thread(_dl.update_word_mapping, mapping_id, updates)
+    return await asyncio.to_thread(_dl.get_word_mapping, mapping_id)
+
+
+@router.delete("/word-mappings/{mapping_id}")
+async def api_delete_word_mapping(mapping_id: str):
+    await asyncio.to_thread(_dl.delete_word_mapping, mapping_id)
+    return {"ok": True}

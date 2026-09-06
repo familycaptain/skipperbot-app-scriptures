@@ -1,0 +1,26 @@
+kind: specification
+id: scriptures.reading.material-belongs-to-the-chapter-it-was-asked-for
+title: Study material always belongs to the chapter on the screen
+state: live
+autonomy: gated
+behavior: >
+  Asking for a summary, the people, the places or the pronouns can take several seconds, and a reader
+  is free to move on while it is being prepared. What arrives is only ever shown against the chapter
+  it was asked for: material prepared for a chapter the reader has already left is discarded rather
+  than displayed, and the reader never sees one chapter's study material under another chapter's
+  heading. Moving on also stops the earlier chapter's progress indicator from claiming the new one is
+  still being prepared.
+implements:
+- ui/ScripturesApp.jsx::handleViewSummary
+- ui/ScripturesApp.jsx::handleViewPeople
+- ui/ScripturesApp.jsx::handleViewPlaces
+- ui/ScripturesApp.jsx::handleGeneratePronouns
+tests:
+- tests/test_word_mappings.py
+links: {}
+notes: >
+  Reported from the household: Iyoḇ 1 displaying Estĕr 1's summary. The stored material was correct
+  throughout — every row held the right chapter — so it read like data corruption and was not. Each
+  request now records where the reader was before it asks and drops its answer if they have since
+  moved, which is a hazard of every surface here because moving through chapters while material is
+  still being prepared is the ordinary way to read, and near-instant with a remote.

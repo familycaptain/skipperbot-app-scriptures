@@ -1,0 +1,37 @@
+kind: specification
+id: scriptures.reading.words-the-household-reads-differently
+title: Words the household prefers to read differently
+state: live
+autonomy: gated
+behavior: >
+  A household can say that a word should be read as another word — a translation's "sovereign" shown
+  as "king" — and every place that word appears while reading shows the replacement instead: the
+  verses, and the summary, people and places written about them. One entry covers a word however it
+  is capitalised, and the replacement takes the capitalisation of the word it stands in for, so a word
+  opening a sentence still opens the sentence. Only whole words change, so a longer word that merely
+  begins with a shorter one is left alone, and where one rule's word contains another's the longer
+  rule is the one that applies, whichever order they were entered. The list is the household's, shared
+  by everyone, and applies whichever translation is being read. A rule can be switched off without
+  being lost.
+
+  Nothing is changed in the text itself. Searching still finds the word the translation actually uses,
+  everything Skipper writes about a chapter is still written from what it really says, and turning the
+  rules off returns the reading to the translation exactly as published. A person or place keeps the
+  name the text gives it.
+implements:
+- ui/ScripturesApp.jsx::WordsTab
+- ui/ScripturesApp.jsx::buildWordMapper
+- data.py::list_word_mappings
+- routes.py::api_list_word_mappings
+- migrations/004_word_mappings.sql
+tests:
+- tests/test_word_mappings.py
+links: {}
+notes: >
+  A reading aid, deliberately not an edit — which is what makes it safe to apply to generated material
+  as well: the summary was written from the real text and only its display is adjusted, so no
+  regeneration is needed and nothing about the stored study material depends on the rules in force.
+
+  Two details are easy to get wrong and invisible until a real chapter is read: applying rules in the
+  order they were typed turns "sovereigness" into "kingess", and one rule per capitalisation would
+  mean three rules for every word.

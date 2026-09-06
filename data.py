@@ -365,3 +365,55 @@ def move_bookmark(bookmark_id: str, book: int, chapter: int, user_id: str = "") 
 
 def delete_bookmark(bookmark_id: str) -> bool:
     return _execute("DELETE FROM scripture_bookmarks WHERE id = %s", (bookmark_id,)) > 0
+
+
+# ---------------------------------------------------------------------------
+# Word mappings (reading aid — display only, never alters stored text)
+# ---------------------------------------------------------------------------
+
+def list_word_mappings(active_only: bool = False) -> list[dict]:
+    """Every mapping, longest source first.
+
+    Ordered so that a caller applying them in sequence tries `sovereigness` before
+    `sovereign` — otherwise the shorter rule fires first and leaves "kingess".
+    """
+    where = "WHERE active" if active_only else ""
+    return _fetch_all(
+        f"SELECT * FROM word_mappings {where} "
+        f"ORDER BY length(source) DESC, lower(source) ASC"
+    )
+
+
+def get_word_mapping(mapping_id: str) -> dict | None:
+    return _fetch_one("SELECT * FROM word_mappings WHERE id = %s", (mapping_id,))
+
+
+def create_word_mapping(source: str, replacement: str, created_by: str = "") -> dict:
+    mapping_id = f"wm-{uuid.uuid4().hex[:8]}"
+    _execute(
+        """INSERT INTO word_mappings (id, source, replacement, created_by, updated_at)
+           VALUES (%s, %s, %s, %s, now())""",
+        (mapping_id, (source or "").strip(), (replacement or "").strip(), created_by),
+    )
+    return get_word_mapping(mapping_id)
+
+
+def update_word_mapping(mapping_id: str, updates: dict) -> bool:
+    allowed = {"source", "replacement", "active"}
+    sets, vals = [], []
+    for key, val in updates.items():
+        if key not in allowed:
+            continue
+        sets.append(f"{key} = %s")
+        vals.append(val.strip() if isinstance(val, str) else val)
+    if not sets:
+        return False
+    vals.append(mapping_id)
+    _execute(f"UPDATE word_mappings SET {', '.join(sets)}, updated_at = now() WHERE id = %s",
+             tuple(vals))
+    return True
+
+
+def delete_word_mapping(mapping_id: str) -> bool:
+    _execute("DELETE FROM word_mappings WHERE id = %s", (mapping_id,))
+    return True

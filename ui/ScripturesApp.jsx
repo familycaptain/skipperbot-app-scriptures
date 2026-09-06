@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   BookOpen, Search, Bookmark, ChevronLeft, ChevronRight, ChevronDown,
-  Loader2, Plus, Trash2, X, Type, RefreshCw, Maximize2, Minimize2, Tv,
+  Loader2, Plus, Trash2, X, Type, RefreshCw, Maximize2, Minimize2, Tv, Replace,
 } from "lucide-react";
 
 /**
@@ -38,6 +38,7 @@ const TABS = [
   { id: "read",      label: "Read",      Icon: BookOpen },
   { id: "search",    label: "Search",    Icon: Search },
   { id: "bookmarks", label: "Bookmarks", Icon: Bookmark },
+  { id: "words",     label: "Words",     Icon: Replace },
 ];
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -150,10 +151,20 @@ export default function ScripturesApp({ appId, userId, onTitle, refreshKey }) {
 
   useEffect(() => { loadChapter(); }, [loadChapter]);
 
+  // Where the reader is RIGHT NOW, refreshed every render. Generating study material is a
+  // model call taking seconds, and the reader can move on while it runs — pressing on
+  // through chapters is the normal rhythm, especially with a remote. Without this, a
+  // response for the chapter they left lands and overwrites the one they are looking at:
+  // reported from the household as Iyoḇ 1 showing Estĕr 1's summary. Every generator below
+  // captures this before its request and drops the answer if it no longer matches.
+  const positionRef = useRef("");
+  positionRef.current = `${versionId}/${book}/${chapter}`;
+
   // Switch to summary → load if needed
   const handleViewSummary = async (force) => {
     setViewMode("summary");
     if (!force && summary) return;
+    const requestedFor = positionRef.current;   // captured BEFORE the request
     setSummaryLoading(true);
     try {
       const res = await fetch(`${API}/summary`, {
@@ -162,14 +173,16 @@ export default function ScripturesApp({ appId, userId, onTitle, refreshKey }) {
         body: JSON.stringify({ version_id: versionId, book, chapter }),
       });
       const data = await res.json();
+      if (positionRef.current !== requestedFor) return;   // the reader moved on — not ours
       setSummary(data.summary);
     } catch (e) { console.error("Failed to generate summary", e); }
-    setSummaryLoading(false);
+    if (positionRef.current === requestedFor) setSummaryLoading(false);
   };
 
   const handleViewPeople = async (force) => {
     setViewMode("people");
     if (!force && people) return;
+    const requestedFor = positionRef.current;   // captured BEFORE the request
     setPeopleLoading(true);
     try {
       const res = await fetch(`${API}/people`, {
@@ -178,14 +191,16 @@ export default function ScripturesApp({ appId, userId, onTitle, refreshKey }) {
         body: JSON.stringify({ version_id: versionId, book, chapter }),
       });
       const data = await res.json();
+      if (positionRef.current !== requestedFor) return;   // the reader moved on — not ours
       setPeople(data.people);
     } catch (e) { console.error("Failed to generate people", e); }
-    setPeopleLoading(false);
+    if (positionRef.current === requestedFor) setPeopleLoading(false);
   };
 
   const handleViewPlaces = async (force) => {
     setViewMode("places");
     if (!force && places) return;
+    const requestedFor = positionRef.current;   // captured BEFORE the request
     setPlacesLoading(true);
     try {
       const res = await fetch(`${API}/places`, {
@@ -194,13 +209,15 @@ export default function ScripturesApp({ appId, userId, onTitle, refreshKey }) {
         body: JSON.stringify({ version_id: versionId, book, chapter }),
       });
       const data = await res.json();
+      if (positionRef.current !== requestedFor) return;   // the reader moved on — not ours
       setPlaces(data.places);
     } catch (e) { console.error("Failed to generate places", e); }
-    setPlacesLoading(false);
+    if (positionRef.current === requestedFor) setPlacesLoading(false);
   };
 
   const handleGeneratePronouns = async (force) => {
     if (!force && pronouns !== null) return;
+    const requestedFor = positionRef.current;   // captured BEFORE the request
     setPronounsLoading(true);
     try {
       const res = await fetch(`${API}/pronouns`, {
@@ -209,6 +226,7 @@ export default function ScripturesApp({ appId, userId, onTitle, refreshKey }) {
         body: JSON.stringify({ version_id: versionId, book, chapter }),
       });
       const data = await res.json();
+      if (positionRef.current !== requestedFor) return;   // the reader moved on — not ours
       setPronouns(data.pronouns ?? []);
       setRevealedPronouns({});
     } catch (e) { console.error("Failed to generate pronouns", e); }
@@ -310,6 +328,7 @@ export default function ScripturesApp({ appId, userId, onTitle, refreshKey }) {
         )}
         {tab === "search" && <SearchTab versionId={versionId} goToVerse={(b, c) => { setBook(b); setChapter(c); setTab("read"); }} fs={fs} />}
         {tab === "bookmarks" && <BookmarksTab versionId={versionId} userId={userId} goToBookmark={goToBookmark} />}
+        {tab === "words" && <WordsTab fs={fs} />}
       </div>
 
     {selectedEntity && (
@@ -360,6 +379,17 @@ function ReadTab({
   // and everything occasional stays a click on a target made big enough to hit from a sofa.
   //
   // Remembered per device, so the HTPC is set up once and a laptop never sees it.
+  const [wordMappings, setWordMappings] = useState([]);
+  const wordMapper = useMemo(() => buildWordMapper(wordMappings), [wordMappings]);
+  const loadWordMappings = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/word-mappings`);
+      const data = await res.json();
+      setWordMappings(data.mappings || []);
+    } catch (e) { console.error("Failed to load word mappings", e); }
+  }, []);
+  useEffect(() => { loadWordMappings(); }, [loadWordMappings]);
+
   const [remoteMode, setRemoteMode] = useState(() => {
     try { return localStorage.getItem("scriptures_remote_mode") === "1"; } catch { return false; }
   });
@@ -433,9 +463,17 @@ function ReadTab({
 
       const pane = scrollRef.current;
       const page = pane ? Math.max(120, Math.round(pane.clientHeight * 0.85)) : 400;
+      // Glide rather than jump: a screenful appearing instantly costs the reader their
+      // place, which on a television is the whole difficulty. Repeated presses retarget an
+      // in-flight scroll rather than queueing, so holding the button still moves steadily.
+      const glide = (delta) => {
+        if (!pane) return;
+        const smooth = !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+        pane.scrollBy({ top: delta, behavior: smooth ? "smooth" : "auto" });
+      };
       switch (e.key) {
-        case "ArrowDown": if (pane) pane.scrollTop += page; break;
-        case "ArrowUp":   if (pane) pane.scrollTop -= page; break;
+        case "ArrowDown": glide(page); break;
+        case "ArrowUp":   glide(-page); break;
         case "ArrowRight": keyActions.current.stepForward(); break;
         case "ArrowLeft":  keyActions.current.stepBack(); break;
         default: return;                 // anything else is not ours — let it through
@@ -632,16 +670,17 @@ function ReadTab({
                   revealedPronouns={revealedPronouns}
                   onPronounReveal={(key) => setRevealedPronouns(prev => (prev[key] ? prev : { ...prev, [key]: true }))}
                   onEntityClick={setSelectedEntity}
+                  wordMapper={wordMapper}
                 />
               </div>
             ))}
           </div>
         ) : viewMode === "summary" ? (
-          <LlmContent content={summary} isLoading={summaryLoading} loadingLabel="Summarizing chapter…" emptyLabel="No summary available." fs={fs} allEntities={allEntities} onEntityClick={setSelectedEntity} />
+          <LlmContent wordMapper={wordMapper} content={summary} isLoading={summaryLoading} loadingLabel="Summarizing chapter…" emptyLabel="No summary available." fs={fs} allEntities={allEntities} onEntityClick={setSelectedEntity} />
         ) : viewMode === "people" ? (
-          <LlmContent content={people} isLoading={peopleLoading} loadingLabel="Identifying people…" emptyLabel="No people data available." fs={fs} collapsible />
+          <LlmContent wordMapper={wordMapper} content={people} isLoading={peopleLoading} loadingLabel="Identifying people…" emptyLabel="No people data available." fs={fs} collapsible />
         ) : viewMode === "places" ? (
-          <LlmContent content={places} isLoading={placesLoading} loadingLabel="Identifying places…" emptyLabel="No places data available." fs={fs} collapsible />
+          <LlmContent wordMapper={wordMapper} content={places} isLoading={placesLoading} loadingLabel="Identifying places…" emptyLabel="No places data available." fs={fs} collapsible />
         ) : null}
       </div>
 
@@ -886,13 +925,74 @@ function parseHtmlWithEntities(html, allEntities) {
 }
 
 // Renders verse HTML with entity and pronoun interactions.
-function VerseText({ html, allEntities, pronounInstances, revealedPronouns, onPronounReveal, onEntityClick, className }) {
+
+// ─── Word mappings (reading aid) ───────────────────────────────────────────
+//
+// The household reads certain words as other words — "Sovereign" as "king". This is
+// DISPLAY ONLY: it is applied as text is drawn, never to anything stored, so search still
+// finds what the translation actually says and every summary is still generated from the
+// real text.
+
+function escapeForRegex(text) {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Make a replacement wear the same case as the word it replaced. */
+function matchCase(original, replacement) {
+  if (!original || !replacement) return replacement;
+  // ALL CAPS — but only when there is more than one letter, so "A" does not force "KING".
+  const letters = original.replace(/[^A-Za-z\u00C0-\u024F]/g, "");
+  if (letters.length > 1 && original === original.toUpperCase()) return replacement.toUpperCase();
+  if (original[0] === original[0].toUpperCase()) {
+    return replacement[0].toUpperCase() + replacement.slice(1);
+  }
+  return replacement;
+}
+
+/** Build a substitution function, or null when there is nothing to do. */
+function buildWordMapper(mappings) {
+  const rules = (mappings || []).filter(m => m && m.active !== false && m.source && m.replacement);
+  if (!rules.length) return null;
+
+  // LONGEST FIRST. JavaScript alternation matches leftmost-first, not longest, so with
+  // "sovereign|sovereigness" the short rule wins and "sovereigness" becomes "kingess".
+  // Sorting by length is what makes the order rules are entered in irrelevant.
+  const sorted = [...rules].sort((a, b) => b.source.length - a.source.length);
+  const byWord = new Map(sorted.map(m => [m.source.toLowerCase(), m.replacement]));
+  const pattern = new RegExp(
+    `(?<![\\p{L}\\p{N}])(${sorted.map(m => escapeForRegex(m.source)).join("|")})(?![\\p{L}\\p{N}])`,
+    "giu"
+  );
+  return (text) => {
+    if (!text) return text;
+    return String(text).replace(pattern, (found) =>
+      matchCase(found, byWord.get(found.toLowerCase()) ?? found));
+  };
+}
+
+/** Apply the mapping to the TEXT of an html fragment, never to its markup. */
+function mapHtml(html, mapper) {
+  if (!mapper || !html) return html;
+  try {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = html;
+    const walker = document.createTreeWalker(tpl.content, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) node.nodeValue = mapper(node.nodeValue);
+    return tpl.innerHTML;
+  } catch {
+    return html;   // never let a reading aid stop the verse from rendering
+  }
+}
+
+function VerseText({ html, allEntities, pronounInstances, revealedPronouns, onPronounReveal, onEntityClick, className, wordMapper }) {
   const segments = useMemo(
     () => (allEntities.length || pronounInstances.length) ? parseVerseHtml(html, allEntities, pronounInstances) : null,
     [html, allEntities, pronounInstances]
   );
   if (!segments) {
-    return <span className={className} dangerouslySetInnerHTML={{ __html: html }} />;
+    return <span className={className}
+                 dangerouslySetInnerHTML={{ __html: mapHtml(html, wordMapper) }} />;
   }
   return (
     <span className={className}>
@@ -907,6 +1007,10 @@ function VerseText({ html, allEntities, pronounInstances, revealedPronouns, onPr
               {seg.content}
             </span>
           );
+        }
+        if (seg.type === "text" && wordMapper) {
+          // Only the ordinary words. A person or place keeps the name the text gives it.
+          return <span key={i} dangerouslySetInnerHTML={{ __html: mapHtml(seg.content, wordMapper) }} />;
         }
         if (seg.type === "pronoun") {
           const isRevealed = !!revealedPronouns?.[seg.pronounKey];
@@ -968,7 +1072,10 @@ function injectEntityLinks(html, entities) {
 //  LLM Content (shared renderer for Summary / People / Places)
 // ═════════════════════════════════════════════════════════════════════════════
 
-function LlmContent({ content, isLoading, loadingLabel, emptyLabel, fs, collapsible, allEntities, onEntityClick }) {
+function LlmContent({ content, isLoading, loadingLabel, emptyLabel, fs, collapsible, allEntities, onEntityClick, wordMapper }) {
+  // Applied to the generated prose for the same reason it is applied to the verses: a
+  // chapter that reads "king" whose summary says "Sovereign" is worse than neither.
+  content = wordMapper && typeof content === "string" ? wordMapper(content) : content;
   const [openIdx, setOpenIdx] = useState(null);
 
   // Reset open section when content changes
@@ -1382,6 +1489,125 @@ function BookmarksTab({ versionId, userId, goToBookmark }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Words — the household's reading aid
+// ═════════════════════════════════════════════════════════════════════════════
+
+function WordsTab({ fs }) {
+  const [rules, setRules] = useState(null);
+  const [source, setSource] = useState("");
+  const [replacement, setReplacement] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/word-mappings`);
+      setRules((await res.json()).mappings || []);
+    } catch { setError("Could not load the word list."); }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  async function add(e) {
+    e?.preventDefault?.();
+    if (!source.trim() || !replacement.trim()) return;
+    setBusy(true); setError("");
+    try {
+      const res = await fetch(`${API}/word-mappings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: source.trim(), replacement: replacement.trim() }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.detail || "Could not add that rule.");
+      } else {
+        setSource(""); setReplacement(""); await load();
+      }
+    } finally { setBusy(false); }
+  }
+
+  async function toggle(rule) {
+    await fetch(`${API}/word-mappings/${rule.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active: !rule.active }),
+    });
+    load();
+  }
+
+  async function remove(rule) {
+    await fetch(`${API}/word-mappings/${rule.id}`, { method: "DELETE" });
+    load();
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto p-4">
+      <h2 className="text-lg font-semibold text-gray-100">Words</h2>
+      <p className="text-sm text-gray-400 mt-1 mb-5 max-w-2xl">
+        Words the household prefers to read differently. These change only what is shown —
+        the text itself is untouched, so searching still finds the original word, and
+        anything Skipper writes about a chapter is still written from what the translation
+        actually says. Capitalisation follows the text: one rule covers
+        <span className="text-gray-300"> sovereign</span>,
+        <span className="text-gray-300"> Sovereign</span> and
+        <span className="text-gray-300"> SOVEREIGN</span>.
+      </p>
+
+      <form onSubmit={add} className="flex flex-wrap items-end gap-2 mb-6">
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-gray-500">Read this word</span>
+          <input value={source} onChange={e => setSource(e.target.value)}
+            placeholder="sovereign"
+            className="bg-gray-900 border border-gray-600 rounded px-3 py-2 text-gray-200" />
+        </label>
+        <span className="pb-2.5 text-gray-500">as</span>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-gray-500">this one</span>
+          <input value={replacement} onChange={e => setReplacement(e.target.value)}
+            placeholder="king"
+            className="bg-gray-900 border border-gray-600 rounded px-3 py-2 text-gray-200" />
+        </label>
+        <button type="submit" disabled={busy || !source.trim() || !replacement.trim()}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40">
+          <Plus size={15} /> Add
+        </button>
+      </form>
+
+      {error && <div className="mb-4 text-sm text-red-400">{error}</div>}
+
+      {rules === null ? (
+        <div className="text-gray-500 text-sm">Loading…</div>
+      ) : rules.length === 0 ? (
+        <div className="text-gray-500 text-sm">
+          No words are being changed. The text reads exactly as the translation wrote it.
+        </div>
+      ) : (
+        <div className="max-w-2xl divide-y divide-gray-800 border border-gray-800 rounded-lg">
+          {rules.map(r => (
+            <div key={r.id} className="flex items-center gap-3 px-4 py-3">
+              <div className={`flex-1 ${r.active ? "" : "opacity-40"}`}>
+                <span className="text-gray-300">{r.source}</span>
+                <span className="text-gray-600 mx-2">&rarr;</span>
+                <span className="text-gray-100 font-medium">{r.replacement}</span>
+                {!r.active && <span className="ml-3 text-xs text-gray-500">(off)</span>}
+              </div>
+              <button onClick={() => toggle(r)}
+                className="text-xs text-gray-400 hover:text-blue-300 px-2 py-1">
+                {r.active ? "Turn off" : "Turn on"}
+              </button>
+              <button onClick={() => remove(r)} title="Delete"
+                className="p-1.5 text-gray-500 hover:text-red-400 rounded">
+                <Trash2 size={15} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
