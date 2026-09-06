@@ -21,6 +21,7 @@ Run: python3 -m unittest apps.scriptures.tests.test_word_mappings
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -123,8 +124,38 @@ class WhereItIsApplied(unittest.TestCase):
         # exactly where the household most wanted it. Reported from the television.
         self.assertIn("{wordMapper ? wordMapper(seg.content) : seg.content}", self.src)
 
-    def test_plain_text_is_mapped(self):
-        self.assertIn('seg.type === "text" && wordMapper', self.src)
+    def test_every_segment_type_the_parser_emits_is_handled_by_a_mapping_branch(self):
+        # THE BUG THIS REPLACES. The branch for ordinary words read
+        #     if (seg.type === "text" && wordMapper)
+        # while parseVerseHtml pushes { type: "html" }. The two names were agreed by hand
+        # and drifted, so the branch never fired: every word between the highlighted names
+        # fell through to the unmapped fallback, and mapping worked ONLY on a verse with no
+        # entities and no pronouns at all — that is, only before the study material for the
+        # chapter had been generated. Reported from the television, and the test that stood
+        # here asserted the literal string 'seg.type === "text"', so it passed throughout.
+        #
+        # Asserting one spelling cannot catch this. Take the types the PRODUCER emits and
+        # require the CONSUMER to answer for each of them.
+        produced = set(re.findall(r'segments\.push\(\{\s*type:\s*"([a-z]+)"', self.src))
+        self.assertTrue(produced, "parseVerseHtml should push typed segments")
+
+        start = self.src.index("function VerseText(")
+        body = self.src[start:self.src.index("function parseEntities(", start)]
+        handled = set(re.findall(r'seg\.type === "([a-z]+)"', body))
+
+        self.assertEqual(produced - handled, set(),
+                         f"VerseText has no branch for {sorted(produced - handled)}")
+        self.assertEqual(handled - produced, set(),
+                         f"VerseText branches on {sorted(handled - produced)}, which "
+                         "parseVerseHtml never emits — a dead branch, and the words it was "
+                         "meant to map render untouched")
+
+    def test_the_ordinary_words_between_names_are_mapped(self):
+        # Most of a verse is this segment: the text either side of a highlighted name.
+        start = self.src.index("function VerseText(")
+        body = self.src[start:self.src.index("function parseEntities(", start)]
+        branch = body[body.index('seg.type === "html"'):]
+        self.assertIn("mapHtml(seg.content, wordMapper)", branch[:400])
 
     def test_a_revealed_pronoun_is_mapped(self):
         # It is read inline in the verse, so it has to match the words around it.

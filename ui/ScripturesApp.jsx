@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   BookOpen, Search, Bookmark, ChevronLeft, ChevronRight, ChevronDown,
   Loader2, Plus, Trash2, X, Type, RefreshCw, Maximize2, Minimize2, Tv, Replace,
+  ArrowDownToLine,
 } from "lucide-react";
 
 /**
@@ -566,21 +567,31 @@ function ReadTab({
             return (
               <div key={bm.id} className="flex items-center gap-1 shrink-0">
                 <button onClick={() => goToBookmark(bm)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                  className={`inline-flex items-center gap-1.5 rounded-full border transition-colors ${
+                    remoteMode ? "px-5 py-3 text-lg" : "px-3 py-1.5 text-sm"} ${
                     isHere
                       ? `${COLOR_MAP[color]} text-white border-transparent ring-2 ${COLOR_RING[color]}`
                       : `bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600`
                   }`}>
-                  <Bookmark size={14} />
+                  <Bookmark size={remoteMode ? 20 : 14} />
                   <span className="font-medium">{bm.name}</span>
                   <span className="text-xs opacity-70">
                     {bm.book_name || ""} {bm.chapter}
                   </span>
                 </button>
                 {!isHere && (
-                  <button onClick={() => moveBookmark(bm.id)} title="Save current position to this bookmark"
-                    className="text-xs text-gray-500 hover:text-blue-400 px-1">
-                    ↓ Save
+                  // A pill matching the bookmark beside it. It was 12px grey text with 4px
+                  // of padding — easy to miss and hard to hit, and this bar is on screen
+                  // while reading on a television, where the pointer is an accelerometer.
+                  <button onClick={() => moveBookmark(bm.id)}
+                    title={`Save this chapter to “${bm.name}”`}
+                    aria-label={`Save this chapter to ${bm.name}`}
+                    className={`inline-flex items-center gap-1.5 rounded-full border border-gray-600
+                      bg-gray-700 text-gray-200 hover:bg-blue-600 hover:text-white
+                      hover:border-blue-500 transition-colors ${
+                        remoteMode ? "px-5 py-3 text-lg" : "px-3 py-1.5 text-sm"}`}>
+                    <ArrowDownToLine size={remoteMode ? 20 : 14} />
+                    <span className="font-medium">Save</span>
                   </button>
                 )}
               </div>
@@ -1013,8 +1024,10 @@ function VerseText({ html, allEntities, pronounInstances, revealedPronouns, onPr
             </span>
           );
         }
-        if (seg.type === "text" && wordMapper) {
-          // Only the ordinary words. A person or place keeps the name the text gives it.
+        if (seg.type === "html") {
+          // Ordinary words between the highlighted names. parseVerseHtml calls these
+          // "html", not "text" — a branch on "text" here never fires, and every word in
+          // any chapter that has study material renders unmapped.
           return <span key={i} dangerouslySetInnerHTML={{ __html: mapHtml(seg.content, wordMapper) }} />;
         }
         if (seg.type === "pronoun") {
