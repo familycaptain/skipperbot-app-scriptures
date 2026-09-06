@@ -115,5 +115,46 @@ class TheTranslationIsIdentifiedByNameAndAbbreviation(unittest.TestCase):
         self.assertEqual(routes._version_label({}), "Bible")
 
 
+
+class TheBookIsNamedAsThisTranslationNamesIt(unittest.TestCase):
+    """The prompt must not contradict itself.
+
+    Found in real output: summaries generated against TS2009 mixed "Iyoḇ" with "Job" and
+    "Estĕr" with "Esther" — sometimes in one sentence. The cause was the prompt naming the
+    book in familiar English while instructing the model to use the translation's own
+    vocabulary; the model sometimes echoed the instruction back. bible_books carries both
+    (TS2009: name='Iyoḇ', name_english='Job'), and the code was reading the English one.
+    """
+
+    def test_the_versions_own_name_is_preferred(self):
+        self.assertEqual(
+            routes._book_name({"name": "Iyoḇ", "name_english": "Job"}, 18), "Iyoḇ")
+
+    def test_english_is_the_fallback_not_the_default(self):
+        # A version like the KJV stores the same string in both, so nothing changes there.
+        self.assertEqual(routes._book_name({"name": "", "name_english": "Job"}, 18), "Job")
+        self.assertEqual(routes._book_name({"name": "Job", "name_english": "Job"}, 18), "Job")
+
+    def test_a_missing_book_still_names_something(self):
+        self.assertEqual(routes._book_name(None, 18), "Book 18")
+        self.assertEqual(routes._book_name({}, 7), "Book 7")
+
+    def test_the_prompt_carries_that_name(self):
+        stub = mock.MagicMock(); stub.content = "out"
+        with mock.patch.object(routes, "chat_completion", return_value=stub) as m:
+            routes._generate_summary_llm("Iyoḇ", 1, "text", "The Scriptures 2009 (TS2009)")
+        prompt = m.call_args.kwargs["messages"][1]["content"]
+        self.assertIn("Iyoḇ chapter 1", prompt)
+        self.assertNotIn("Job", prompt)
+
+
+class TheSummaryDoesNotOpenWithAFormula(unittest.TestCase):
+    def test_it_forbids_announcing_the_summary_before_giving_it(self):
+        # Of the first twelve written with the new prompt, most opened "The point of the
+        # chapter is..." or "This chapter is about..." — fine once, a tic across a book.
+        p = _all_prompts()["summary"]
+        self.assertIn("Do NOT open by announcing", p)
+        self.assertIn("Begin with the substance", p)
+
 if __name__ == "__main__":
     unittest.main()

@@ -12,9 +12,12 @@ behavior: >
   rather than the one most English editions use, so material never quietly reads a chapter back in
   another tradition's language. Reading the same chapter in another translation generates and keeps
   its own material. This holds for all four kinds — the summary, the people, the places, and the
-  pronoun replacements a reader sees inline in the verse.
+  pronoun replacements a reader sees inline in the verse — and it extends to the book's own name:
+  material about a book is headed and written using the name this translation gives it, not the
+  familiar English one.
 implements:
 - data.py::save_chapter_summary
+- routes.py::_book_name
 - routes.py::_translation_voice
 - routes.py::_version_label
 - routes.py::_generate_summary_llm
@@ -35,3 +38,8 @@ notes: >
   right for one translation and wrong for the next; the chapter text is supplied with the request, so
   the translation in front of the model is the authority. Its name AND abbreviation are given, since
   the abbreviation is what a model is most likely to recognise.
+
+  A second cause showed up in real output a fortnight later: summaries mixed Iyoḇ with Job and Estĕr
+  with Esther, sometimes in one sentence, because the prompt named the book in familiar English while
+  telling the model to use the translation's vocabulary — so it sometimes echoed the instruction back.
+  Each version stores both names; the version's own is now the one used.

@@ -105,11 +105,8 @@ def prefetch_scripture_summaries() -> str:
 
         for book, chapter, book_info in _chapters_ahead(
                 version_id, start_book, base_chapter, LOOK_AHEAD + 1, books_cache):
-            book_name = (
-                (book_info or {}).get("name_english")
-                or (book_info or {}).get("name")
-                or f"Book {book}"
-            )
+            from apps.scriptures.routes import _book_name
+            book_name = _book_name(book_info, book)
             key = (version_id, book, chapter)
             if key in seen:
                 continue

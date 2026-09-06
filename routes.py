@@ -156,7 +156,7 @@ async def api_generate_summary(request: Request):
         raise HTTPException(404, "No verses found for this chapter")
 
     book_info = await asyncio.to_thread(_dl.get_book, version_id, book)
-    book_name = book_info["name_english"] if book_info else f"Book {book}"
+    book_name = _book_name(book_info, book)
     version_info = await asyncio.to_thread(_dl.get_version, version_id)
     version_name = _version_label(version_info)
 
@@ -176,6 +176,20 @@ async def api_generate_summary(request: Request):
     await asyncio.to_thread(_dl.save_chapter_summary, version_id, book, chapter, summary, model_name)
 
     return {"summary": summary, "cached": False}
+
+
+def _book_name(book_info, book_number) -> str:
+    """What THIS translation calls the book.
+
+    `name` is the version's own rendering (TS2009 stores Iyoḇ, Estĕr); `name_english` is the
+    familiar English one (Job, Esther) and is identical for a version like the KJV. Passing
+    the English name put the prompt at odds with itself — it said "explain what happens in
+    Job" while instructing the model to use the translation's vocabulary, and the model
+    sometimes echoed the instruction, producing summaries that mixed Iyoḇ with Job and
+    Estĕr with Esther in the same sentence.
+    """
+    info = book_info or {}
+    return (info.get("name") or info.get("name_english") or f"Book {book_number}").strip()
 
 
 def _version_label(version_info) -> str:
@@ -244,9 +258,13 @@ def _generate_summary_llm(book_name: str, chapter: int, chapter_text: str, versi
         f"Explain what happens in {book_name} chapter {chapter}, and what it is about.\n\n"
         f"Write it the way you would explain the chapter out loud to somebody who has not "
         f"read it: a short, plain-language account of what happens, who it happens to, and "
-        f"what the chapter is getting at. Lead with the point of the chapter, then tell "
-        f"what happened. Somebody should be able to read this instead of the chapter and "
-        f"come away knowing what it was about.\n\n"
+        f"what the chapter is getting at. Open with the point itself, then tell what "
+        f"happened. Somebody should be able to read this instead of the chapter and come "
+        f"away knowing what it was about.\n\n"
+        f"Do NOT open by announcing what you are about to do. Sentences like \"This chapter "
+        f"is about...\", \"The point of the chapter is...\" or \"This chapter shows...\" waste "
+        f"the first line and read as a formula when several are read together. Begin with "
+        f"the substance — who did what, and what it meant.\n\n"
         f"Length: one page at most, and shorter whenever the chapter allows it. A short "
         f"chapter gets a short summary.\n\n"
         f"Do NOT go through the chapter verse by verse, and do NOT restate each verse in "
@@ -304,7 +322,7 @@ async def api_generate_people(request: Request):
             raise HTTPException(404, "No verses found for this chapter")
 
         book_info = await asyncio.to_thread(_dl.get_book, version_id, book)
-        book_name = book_info["name_english"] if book_info else f"Book {book}"
+        book_name = _book_name(book_info, book)
         version_info = await asyncio.to_thread(_dl.get_version, version_id)
         version_name = _version_label(version_info)
         chapter_text = " ".join(v["text"] for v in verses)
@@ -387,7 +405,7 @@ async def api_generate_places(request: Request):
             raise HTTPException(404, "No verses found for this chapter")
 
         book_info = await asyncio.to_thread(_dl.get_book, version_id, book)
-        book_name = book_info["name_english"] if book_info else f"Book {book}"
+        book_name = _book_name(book_info, book)
         version_info = await asyncio.to_thread(_dl.get_version, version_id)
         version_name = _version_label(version_info)
         chapter_text = " ".join(v["text"] for v in verses)
@@ -471,7 +489,7 @@ async def api_generate_pronouns(request: Request):
             raise HTTPException(404, "No verses found for this chapter")
 
         book_info = await asyncio.to_thread(_dl.get_book, version_id, book)
-        book_name = book_info["name_english"] if book_info else f"Book {book}"
+        book_name = _book_name(book_info, book)
         version_info = await asyncio.to_thread(_dl.get_version, version_id)
         version_name = _version_label(version_info)
 
