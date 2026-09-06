@@ -49,9 +49,24 @@ class ItAsksForTheChaptersPointNotItsContents(unittest.TestCase):
     def test_it_asks_for_plain_language(self):
         self.assertIn("plain-language", _prompt().lower())
 
-    def test_it_caps_the_length_at_a_page(self):
+    def test_it_asks_for_about_a_hundred_words_with_a_hard_ceiling(self):
+        # "One page at most" permitted ~1,700 characters of livestock counts and quoted
+        # speech — a shorter retelling rather than a summary. Reported twice from the
+        # household as still too long and too detailed.
         p = _prompt().lower()
-        self.assertIn("one page at most", p)
+        self.assertIn("about 100 words", p)
+        self.assertIn("never more than 200", p)
+
+    def test_it_rules_out_the_detail_that_made_them_long(self):
+        p = _prompt().lower()
+        for banned in ("inventories", "no counts", "no quoting", "each messenger"):
+            with self.subTest(banned=banned):
+                self.assertIn(banned, p)
+
+    def test_it_says_a_shorter_retelling_is_not_a_summary(self):
+        # The distinction the previous wording failed to draw.
+        self.assertIn("Retelling the chapter more briefly is not summarising it",
+                      _prompt())
 
     def test_it_forbids_going_verse_by_verse(self):
         # The specific failure being corrected.
